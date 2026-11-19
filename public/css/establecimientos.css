@@ -1388,6 +1388,15 @@ a.ficha__valor:hover {
     margin-top: 1.5rem;
 }
 
+.vista-previa__mapa {
+    margin-bottom: 1rem;
+}
+
+.vista-previa__mapa .mapa__lienzo {
+    height: clamp(18rem, 48vh, 30rem);
+    isolation: isolate;
+}
+
 .vista-previa__seccion h2,
 .directorio > #inicio {
     scroll-margin-top: 8rem;

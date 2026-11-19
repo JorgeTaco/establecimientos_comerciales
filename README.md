@@ -91,4 +91,12 @@ Al desarrollar el mapa, habilita **Maps JavaScript API** en el proyecto de Googl
 
 El listado presenta las coordenadas y carga Google Maps al pulsar **Mostrar mapa**. Los filtros reutilizan el mapa de la página. Para probar el listado y la búsqueda, basta con consultar la API de Laravel.
 
+#### Mapa en GitHub Pages
+
+Pulsa **Mostrar mapa** en el directorio de ejemplo. Los marcadores siguen el texto de búsqueda y el estado de recepción. Solo se ubican las fichas con coordenadas. El mapa público usa OpenStreetMap mientras se configura Google Maps o si Google rechaza la clave.
+
+1. En un proyecto de Google Cloud con facturación habilitada, activa **Maps JavaScript API** y crea una clave web exclusiva para GitHub Pages. En **Sitios web**, autoriza `https://jorgetaco.github.io/*`. En **Restricciones de API**, permite únicamente **Maps JavaScript API**. [Configuración de la clave](https://developers.google.com/maps/documentation/javascript/get-api-key)
+2. Crea un ID de mapa JavaScript y configura `data-google-maps-key` y `data-google-maps-map-id` en `index.html`. La clave web será visible en el navegador, así que aplica las restricciones antes de publicarla. [Creación de un ID de mapa](https://developers.google.com/maps/documentation/javascript/advanced-markers/start)
+3. Abre GitHub Pages y pulsa **Mostrar mapa**. El mapa se carga una vez por visita y los filtros actualizan los marcadores de la misma instancia. Para limitar el consumo, revisa las cuotas de **Maps JavaScript API** en Google Cloud. [Uso y facturación](https://developers.google.com/maps/documentation/javascript/usage-and-billing)
+
 El Excel original, los datos reales y las credenciales privadas se guardan fuera de Git.
