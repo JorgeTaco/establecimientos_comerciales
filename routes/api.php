@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\FotoController;
 use App\Http\Controllers\Api\OportunidadController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\PropuestaController;
-use App\Http\Controllers\Api\SesionController;
+use App\Http\Controllers\SesionController;
 use App\Http\Middleware\CuentaActiva;
 use Illuminate\Support\Facades\Route;
 
@@ -20,9 +20,10 @@ Route::get('/categorias', [AdministracionController::class, 'categorias']);
 Route::get('/catalogos/{token}', [CatalogoController::class, 'publico'])->whereUuid('token')->name('api.catalogos.publico');
 
 Route::middleware('web')->group(function () {
-    Route::get('/sesion/csrf', [SesionController::class, 'csrf'])->middleware('throttle:60,1');
+    Route::get('/sesion/csrf', [SesionController::class, 'csrf'])->middleware('throttle:contexto-sesion');
+    Route::get('/sesion/contexto', [SesionController::class, 'contexto'])->middleware('throttle:contexto-sesion');
     Route::post('/registro', [SesionController::class, 'registrar'])->middleware('throttle:5,1');
-    Route::post('/sesion', [SesionController::class, 'ingresar'])->middleware('throttle:10,1');
+    Route::post('/sesion', [SesionController::class, 'ingresar'])->middleware('throttle:inicio-sesion');
 
     Route::middleware('auth')->group(function () {
         Route::delete('/sesion', [SesionController::class, 'salir']);

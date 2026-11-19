@@ -16,6 +16,17 @@
             propuestas antes de contactarlos.
         </p>
 
+        <nav aria-label="Cuenta">
+            @auth
+                <form method="post" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="boton-secundario" type="submit">Cerrar sesión</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}">Iniciar sesión</a>
+            @endauth
+        </nav>
+
         <dl class="resumen" id="resumen" aria-live="polite">
             <div class="resumen__dato">
                 <dt>Comercios</dt>
