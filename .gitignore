@@ -27,6 +27,7 @@ Homestead.yaml
 Thumbs.db
 
 /datos/privados/
+/datos/importacion/
 *.xlsx
 *.xls
 *.xlsm
