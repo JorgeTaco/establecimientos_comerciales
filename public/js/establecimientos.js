@@ -30,6 +30,7 @@
         vacio: document.getElementById('estado-vacio'),
         error: document.getElementById('estado-error'),
         mapa: document.getElementById('mapa'),
+        cargarMapa: document.getElementById('cargar-mapa'),
         mapaAviso: document.getElementById('mapa-aviso'),
         mapaAvisoTexto: document.getElementById('mapa-aviso-texto'),
         mapaUbicados: document.getElementById('mapa-ubicados'),
@@ -262,6 +263,9 @@
             return true;
         });
 
+        dom.cargarMapa.disabled = !estado.visibles.some(function (item) {
+            return item.tieneUbicacion;
+        });
         pintarListado(estado.visibles);
         actualizarContador();
         actualizarMarcadores(estado.visibles);
@@ -371,6 +375,11 @@
                 ? ' · ' + pendientes + (pendientes === 1 ? ' pendiente' : ' pendientes') + ' de ubicar'
                 : '');
 
+        if (ubicados.length === 0) {
+            avisoMapa('Todavía no hay comercios con coordenadas.', ubicados);
+            return;
+        }
+
         if (!config.googleMapsKey) {
             avisoMapa(
                 'El mapa aún no está configurado. Comercios con coordenadas:',
@@ -379,6 +388,18 @@
             return;
         }
 
+        avisoMapa('Comercios con coordenadas. Pulsa «Mostrar mapa» para verlos en Google Maps:', ubicados);
+        dom.cargarMapa.addEventListener('click', function () {
+            ocultar(dom.cargarMapa);
+            dom.mapaAvisoTexto.textContent = 'Cargando Google Maps…';
+            abrirMapa(estado.visibles.filter(function (item) {
+                return item.tieneUbicacion;
+            }));
+        }, { once: true });
+        mostrar(dom.cargarMapa);
+    }
+
+    function abrirMapa(ubicados) {
         var errorAutenticacion = false;
         function mostrarMapaNoDisponible() {
             errorAutenticacion = true;

@@ -50,10 +50,17 @@ Cada cambio sale del último `main`. Se pueden usar `jorge/acceso-web` para el c
 
 La cuenta principal será de **emprendedor**, que es el rol del recorrido de aceptación. Se creará en la base de la instalación de evaluación con datos ficticios y una contraseña única. Si el docente solicita probar administración o comercio, se prepara un acceso separado para ese rol.
 
-1. **Brandon propone un comando Artisan de aprovisionamiento** con el correo como entrada y la contraseña mediante un prompt oculto. Jorge revisa que use el modelo `User` para guardar el hash y que se niegue a modificar una cuenta existente salvo que se solicite un cambio de clave explícito.
+1. **El comando de aprovisionamiento de Brandon y Jorge** recibe el correo y solicita la contraseña dos veces mediante un prompt oculto. El rol predeterminado es emprendedor. La creación rechaza correos existentes. Si hace falta cambiar una contraseña, `--actualizar-clave` actualiza ese campo y conserva el rol y la suspensión.
 2. **Jorge prepara la instalación de evaluación** con las migraciones y los datos ficticios. Luego crea la cuenta del docente. El comando permite repetir el proceso tras recrear una base de evaluación.
 3. **Brandon o Jorge comprueba el acceso en una ventana privada**, con el enlace y la contraseña exactos que se van a entregar. Comprueba que aparece como emprendedor y que puede empezar la prueba.
 4. **Jorge entrega por un canal privado** la URL HTTPS, el correo de entrada, la contraseña y una instrucción corta para empezar. La contraseña se mantiene fuera de Git, del README, de los seeders y de los reportes de prueba.
+
+```bash
+php artisan usuario:crear docente@example.test --nombre="Docente de evaluación"
+php artisan usuario:crear docente@example.test --actualizar-clave
+```
+
+Sustituye el correo de ejemplo por el acordado para la entrega y ejecuta la segunda línea solo si necesitas cambiar la contraseña de la cuenta existente.
 
 ## Pruebas antes de entregar
 

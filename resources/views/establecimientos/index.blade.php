@@ -106,10 +106,13 @@
                 <p class="seccion__nota" id="mapa-nota"></p>
             </div>
 
+            <button type="button" class="boton-secundario" id="cargar-mapa" aria-controls="mapa" hidden>
+                Mostrar mapa
+            </button>
             <div id="mapa" class="mapa__lienzo" role="region" aria-label="Mapa de establecimientos con coordenadas" hidden></div>
 
             <div id="mapa-aviso" class="mapa__aviso">
-                <p id="mapa-aviso-texto">Preparando el mapa…</p>
+                <p id="mapa-aviso-texto" role="status">Preparando las coordenadas…</p>
                 <ul id="mapa-ubicados" class="mapa__lista"></ul>
             </div>
         </section>
