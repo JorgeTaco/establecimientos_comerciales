@@ -94,9 +94,6 @@
             <button type="submit" class="boton boton--secundario" style="margin-top:1rem;">Archivar producto</button>
         </form>
 
-        <p class="pista" style="margin-top:1.5rem;">
-            <a href="{{ route('productos.index') }}">← Volver a mis productos</a>
-        </p>
     </div>
 
     @push('styles')

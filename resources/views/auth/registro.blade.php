@@ -51,9 +51,6 @@
             <span>¿Ya tienes cuenta?</span>
             <a href="{{ route('login') }}" class="boton boton--secundario">Iniciar sesión</a>
         </div>
-        <p class="pista">
-            <a href="{{ route('establecimientos.index') }}">← Volver al directorio</a>
-        </p>
     </div>
 
     @push('styles')

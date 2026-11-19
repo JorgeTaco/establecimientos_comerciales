@@ -14,6 +14,8 @@ Blade sirve las pantallas y el JavaScript consume la [API de Laravel](backend.md
 | `/comercio/establecimientos`, `/propuestas-recibidas` | Comercio | Fichas propias y respuesta a propuestas de los comercios a cargo. |
 | `/admin/indicadores` | Administrador | Indicadores, categorías, usuarios, reportes e importación. |
 
+La barra principal muestra el directorio, la evaluación y las secciones disponibles según el rol. En las demás pantallas, **Volver** lleva a la sección anterior de la ruta, incluso al abrir un enlace directo. Al regresar desde una ficha, la búsqueda y los filtros públicos se conservan si la ficha se abrió desde el directorio.
+
 El directorio distingue una base sin comercios, una búsqueda sin coincidencias y un fallo de carga. **Reintentar** consulta la API con los filtros actuales. La vista previa de GitHub Pages utiliza sus propios datos ficticios. Para probar el flujo completo con MySQL, carga los comercios de ejemplo con `php artisan db:seed`.
 
 La búsqueda, los filtros generales, el orden y la vista seleccionada se conservan en la URL. La ubicación de origen de una búsqueda por radio permanece en el historial de la pestaña. En la red local por HTTP se admiten coordenadas manuales. **Usar mi ubicación** requiere permiso y un origen seguro.

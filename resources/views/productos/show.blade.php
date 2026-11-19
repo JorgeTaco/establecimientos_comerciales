@@ -88,7 +88,4 @@
         </div>
     </div>
 
-    <p class="pista" style="margin-top:2rem;">
-        <a href="{{ route('productos.index') }}">← Volver a mis productos</a>
-    </p>
 </x-layout>

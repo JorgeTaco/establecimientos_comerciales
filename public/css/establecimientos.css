@@ -1379,3 +1379,12 @@ a.ficha__valor:hover {
         min-width: 0;
     }
 }
+
+.vista-previa__seccion {
+    margin-top: 1.5rem;
+}
+
+.vista-previa__seccion h2,
+.directorio > #inicio {
+    scroll-margin-top: 8rem;
+}

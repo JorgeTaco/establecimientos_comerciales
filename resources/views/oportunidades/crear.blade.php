@@ -36,9 +36,6 @@
         </form>
     </div>
 
-    <p class="pista" style="margin-top:1.5rem;">
-        <a href="{{ route('oportunidades.index') }}">← Volver a mis oportunidades</a>
-    </p>
 
     @push('styles')
     <style>

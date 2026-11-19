@@ -10,10 +10,9 @@
     <link rel="stylesheet" href="{{ asset('css/navegacion.css') }}">
 </head>
 <body class="directorio">
-    <header class="cabecera cabecera--directorio">
+    <header class="cabecera cabecera--directorio cabecera--navegacion">
         <div class="barra">
-            <x-marca />
-            <x-menu-cuenta />
+            <x-navegacion />
         </div>
     </header>
 

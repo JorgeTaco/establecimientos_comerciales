@@ -7,7 +7,6 @@
                 {{ $establecimiento['parroquia'] ?? '' }}
             </p>
         </div>
-        <a href="{{ route('establecimientos.index') }}" class="boton boton--secundario">← Volver al directorio</a>
     </div>
 
     @if ($error ?? null)

@@ -3,7 +3,6 @@
     <p>{{ $oportunidad['establecimiento']['parroquia'] }}</p>
     <div class="fila">
         <a href="{{ route('establecimientos.ficha', $oportunidad['establecimiento_id']) }}">Ver ficha del comercio</a>
-        <a href="{{ route('oportunidades.index') }}">Volver a mis oportunidades</a>
     </div>
 
     <section class="tarjeta">
@@ -42,7 +41,7 @@
 
     <section class="tarjeta">
         <h2>Propuestas enviadas</h2>
-        <a href="{{ route('oportunidades.crear', $oportunidad['establecimiento_id']) }}">Enviar propuesta</a>
+        <a href="{{ route('oportunidades.crear', ['establecimiento' => $oportunidad['establecimiento_id'], 'desde_oportunidad' => 1]) }}">Enviar propuesta</a>
         @forelse ($oportunidad['propuestas'] as $propuesta)
             <article>
                 <h3>Propuesta #{{ $propuesta['id'] }}</h3>

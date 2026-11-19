@@ -157,13 +157,13 @@
             color: var(--verde-oscuro);
             border: 1px solid transparent;
         }
-        .encabezado {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
+        .cabecera {
+            background: var(--fondo-calido);
+            border-bottom: 1px solid var(--borde);
+            padding-block: 0.65rem;
+        }
+        .cabecera .contenedor {
+            max-width: 74rem;
         }
         .marca {
             display: inline-flex;
@@ -191,7 +191,7 @@
         }
         .principal {
             flex: 1;
-            padding: 2rem 0 4rem;
+            padding: 1.25rem 0 4rem;
         }
         .pie {
             padding: 2rem 1rem 3rem;
@@ -202,23 +202,20 @@
         }
         @media (max-width: 40rem) {
             .tarjeta { padding: 1.25rem; border-radius: var(--radio-chico); }
-            .encabezado { flex-direction: column; gap: 1rem; align-items: flex-start; }
         }
     </style>
     @stack('styles')
 </head>
 <body>
-    <header class="cabecera">
+    <header class="cabecera cabecera--navegacion">
         <div class="contenedor">
-            <div class="encabezado">
-                <x-marca />
-                <x-menu-cuenta />
-            </div>
+            <x-navegacion />
         </div>
     </header>
 
     <main class="principal">
         <div class="contenedor">
+            <x-ruta-navegacion :titulo="$titulo ?? null" />
             @if (session('status'))
                 <div class="aviso aviso--exito">{{ session('status') }}</div>
             @endif

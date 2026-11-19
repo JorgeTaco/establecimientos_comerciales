@@ -87,9 +87,6 @@
             <button type="submit" class="boton" id="btnProducto" style="width:100%;">Guardar producto</button>
         </form>
 
-        <p class="pista" style="margin-top:1.5rem;">
-            <a href="{{ route('productos.index') }}">← Volver a mis productos</a>
-        </p>
     </div>
 
     @push('styles')
