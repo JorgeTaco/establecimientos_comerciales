@@ -102,8 +102,43 @@
             });
     }
 
+    /**
+     * Intenta primero la API real. Si no responde, falla o no tiene comercios
+     * cargados, usa el JSON ficticio. Nunca inventa datos: informa el origen
+     * para que la pantalla pueda avisarlo.
+     *
+     * @param {string} apiUrl endpoint de la API (GET /api/establecimientos)
+     * @param {string} ejemploUrl JSON ficticio de respaldo
+     * @returns {Promise<{lista: Array, origen: string, detalle: string}>}
+     */
+    function cargarConRespaldo(apiUrl, ejemploUrl) {
+        var detalle = '';
+
+        return fetch(apiUrl, { headers: { Accept: 'application/json' } })
+            .then(function (respuesta) {
+                if (!respuesta.ok) {
+                    throw new Error('HTTP ' + respuesta.status);
+                }
+                return respuesta.json();
+            })
+            .then(function (cuerpo) {
+                var lista = extraerLista(cuerpo).map(normalizar);
+                if (lista.length === 0) {
+                    throw new Error('la API no tiene comercios cargados');
+                }
+                return { lista: lista, origen: 'api', detalle: '' };
+            })
+            .catch(function (error) {
+                detalle = error.message;
+                return cargar(ejemploUrl).then(function (lista) {
+                    return { lista: lista, origen: 'ejemplo', detalle: detalle };
+                });
+            });
+    }
+
     window.DatosEstablecimientos = {
         cargar: cargar,
+        cargarConRespaldo: cargarConRespaldo,
         ESTADOS: ESTADOS,
         TIPOS: TIPOS
     };

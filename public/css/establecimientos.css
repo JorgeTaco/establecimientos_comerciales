@@ -472,6 +472,12 @@ p {
     border-color: transparent;
 }
 
+.mensaje--aviso {
+    color: var(--pendiente-texto);
+    background: var(--pendiente-fondo);
+    border-color: transparent;
+}
+
 .pie {
     margin-top: 2.5rem;
     font-size: 0.8rem;

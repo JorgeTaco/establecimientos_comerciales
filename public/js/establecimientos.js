@@ -32,7 +32,8 @@
         mapaAviso: document.getElementById('mapa-aviso'),
         mapaAvisoTexto: document.getElementById('mapa-aviso-texto'),
         mapaUbicados: document.getElementById('mapa-ubicados'),
-        mapaNota: document.getElementById('mapa-nota')
+        mapaNota: document.getElementById('mapa-nota'),
+        origen: document.getElementById('origen-datos')
     };
 
     var estado = {
@@ -78,9 +79,17 @@
             return;
         }
 
-        datosApi
-            .cargar(config.datos)
-            .then(function (lista) {
+        // Intenta la API y, si aún no tiene datos, cae al JSON ficticio.
+        var cargarListado = datosApi.cargarConRespaldo || function (api, ejemplo) {
+            return datosApi.cargar(ejemplo).then(function (lista) {
+                return { lista: lista, origen: 'ejemplo', detalle: '' };
+            });
+        };
+
+        cargarListado(config.api, config.datos)
+            .then(function (resultado) {
+                var lista = resultado.lista;
+                mostrarOrigen(resultado);
                 estado.todos = lista;
                 llenarSelectores(lista);
                 actualizarResumen(lista);
@@ -92,6 +101,30 @@
             .catch(function (error) {
                 mostrarError('No se pudieron cargar los establecimientos. ' + error.message);
             });
+    }
+
+    /** Aviso visible cuando la pantalla no está leyendo la API real. */
+    function mostrarOrigen(resultado) {
+        if (!dom.origen) {
+            return;
+        }
+
+        if (resultado.origen === 'api') {
+            ocultar(dom.origen);
+            return;
+        }
+
+        var mensaje =
+            'Mostrando ' + resultado.lista.length + ' comercios de ejemplo (ficticios). ' +
+            'La API todavía no tiene comercios cargados.';
+
+        if (resultado.detalle) {
+            // El detalle técnico va a la consola, no a la pantalla.
+            window.console.warn('Respaldo de datos:', resultado.detalle);
+        }
+
+        dom.origen.textContent = mensaje;
+        mostrar(dom.origen);
     }
 
     function mostrarError(mensaje) {

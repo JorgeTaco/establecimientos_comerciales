@@ -26,6 +26,87 @@
       "latitud": null,
       "longitud": null,
       "recepcionProveedores": "por_confirmar"
+    },
+    {
+      "id": "ejemplo-004",
+      "nombre": "Tienda Demo El Volcán",
+      "tipo": "tienda",
+      "parroquia": "Mulaló",
+      "latitud": -0.7813,
+      "longitud": -78.5761,
+      "recepcionProveedores": "recibe_propuestas"
+    },
+    {
+      "id": "ejemplo-005",
+      "nombre": "Minimarket Demo San José",
+      "tipo": "minimercado",
+      "parroquia": "Tanicuchí",
+      "latitud": -0.7995,
+      "longitud": -78.6221,
+      "recepcionProveedores": "por_confirmar"
+    },
+    {
+      "id": "ejemplo-006",
+      "nombre": "Tienda Demo La Esperanza",
+      "tipo": "tienda",
+      "parroquia": "Guaytacama",
+      "latitud": -0.8502,
+      "longitud": -78.6603,
+      "recepcionProveedores": "recibe_propuestas"
+    },
+    {
+      "id": "ejemplo-007",
+      "nombre": "Comercial Demo El Rosal",
+      "tipo": "minimercado",
+      "parroquia": "Lasso",
+      "latitud": -0.6854,
+      "longitud": -78.6185,
+      "recepcionProveedores": "no_recibe_por_ahora"
+    },
+    {
+      "id": "ejemplo-008",
+      "nombre": "Tienda Demo Santa Rosa",
+      "tipo": "tienda",
+      "parroquia": "Lasso",
+      "latitud": null,
+      "longitud": null,
+      "recepcionProveedores": "por_confirmar"
+    },
+    {
+      "id": "ejemplo-009",
+      "nombre": "Minimarket Demo El Ahorro",
+      "tipo": "minimercado",
+      "parroquia": "Salache",
+      "latitud": -0.9938,
+      "longitud": -78.6254,
+      "recepcionProveedores": "recibe_propuestas"
+    },
+    {
+      "id": "ejemplo-010",
+      "nombre": "Supermercado Demo Toacaso",
+      "tipo": "supermercado",
+      "parroquia": "Toacaso",
+      "latitud": -0.7231,
+      "longitud": -78.6802,
+      "recepcionProveedores": "no_recibe_por_ahora"
+    },
+    {
+      "id": "ejemplo-011",
+      "nombre": "Tienda Demo Belisario",
+      "tipo": "tienda",
+      "parroquia": "Belisario Quevedo",
+      "latitud": -0.9412,
+      "longitud": -78.6015,
+      "recepcionProveedores": "recibe_propuestas"
+    },
+    {
+      "id": "ejemplo-012",
+      "nombre": "Minimarket Demo Pastocalle",
+      "tipo": "minimercado",
+      "parroquia": "Pastocalle",
+      "latitud": -0.8801,
+      "longitud": -78.6521,
+      "recepcionProveedores": "por_confirmar"
     }
   ]
 }

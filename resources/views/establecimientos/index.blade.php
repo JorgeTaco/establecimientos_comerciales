@@ -33,6 +33,8 @@
     </header>
 
     <main class="contenido">
+        <p class="mensaje mensaje--aviso" id="origen-datos" role="status" hidden></p>
+
         <section class="filtros" aria-labelledby="filtros-titulo">
             <h2 class="visualmente-oculto" id="filtros-titulo">Buscar y filtrar</h2>
 
@@ -117,8 +119,9 @@
 
     <footer class="pie">
         <p>
-            Datos de ejemplo. Cuando la API esté disponible, el listado se conectará a
-            <code>/api/establecimientos</code>.
+            El listado consulta <code>/api/establecimientos</code>. Mientras la base no tenga
+            comercios cargados, se muestra el ejemplo ficticio de
+            <code>public/datos/</code>.
         </p>
     </footer>
 
