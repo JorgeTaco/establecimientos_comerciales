@@ -12,9 +12,9 @@ El proyecto usa **Laravel 13** con **Blade** para la interfaz, **MySQL** para lo
 | **Michelle** | `resources/views/`, `public/css/`, `public/js/` | Interfaz móvil, mapa con Google Maps, filtros, fichas, catálogo, propuestas, seguimiento y panel de administración | Mostrar el listado y sus estados con los datos de ejemplo. Añadir al mapa los comercios con coordenadas |
 | **Brandon** | [`datos/`](datos/), `app/Importacion/`, `app/Console/Commands/`, `database/factories/`, `database/seeders/`, `tests/` | Importación y validación del Excel, datos ficticios y pruebas del recorrido completo | Mapear las columnas y definir cómo revisar coordenadas y marcar posibles duplicados |
 
-La [guía de colaboración](CONTRIBUTING.md) indica qué rama abrir, quién revisa cada avance y cómo coordinar cambios compartidos. Las notas de [backend](docs/backend.md) e [interfaz](docs/frontend.md) describen la primera tarea de cada área.
+La [guía de colaboración](CONTRIBUTING.md) indica qué rama abrir, quién revisa cada avance y cómo coordinar cambios compartidos. Los [contratos del backend](docs/backend.md) documentan las rutas para la interfaz y el formato que usará el importador de Excel. Los contratos y las migraciones se amplían de forma aditiva.
 
-La primera entrega será un listado móvil conectado a la API de Laravel, con comercios de prueba y su estado de recepción de propuestas. Michelle puede usar el [JSON ficticio](datos/ejemplos/establecimientos.json) mientras Jorge implementa el [contrato del listado](docs/contrato-establecimientos.md) y Brandon prepara el formato de importación.
+La primera entrega será un listado móvil conectado a la API de Laravel, con comercios de prueba y su estado de recepción de propuestas. Michelle puede trabajar con el [JSON ficticio](datos/ejemplos/establecimientos.json) mientras Brandon prepara el formato de importación. Laravel sirve el [contrato del listado](docs/contrato-establecimientos.md) desde MySQL.
 
 La prueba de aceptación del piloto será completar desde el celular este recorrido de emprendedor: registrar un producto, encontrar un comercio compatible, consultar su ficha, contactarlo y guardar el resultado.
 
@@ -35,13 +35,16 @@ Se necesita PHP 8.3 o superior con las extensiones de Laravel y `pdo_mysql`, Com
 
    ```bash
    php artisan migrate
+   php artisan storage:link
    php artisan serve
    ```
 
-   Abre `http://127.0.0.1:8000`. Para comprobar el arranque, ejecuta `php artisan test`. Las futuras pruebas de persistencia deben usar la base MySQL separada `establecimientos_comerciales_test`.
+   Abre `http://127.0.0.1:8000`. El listado se consulta en `GET /api/establecimientos` y devuelve una lista vacía hasta que se carguen comercios.
+
+4. Para ejecutar `php artisan test`, crea también la base MySQL separada `establecimientos_comerciales_test` y otorga al usuario de pruebas permisos para ejecutar migraciones sobre ella. Puedes guardar credenciales específicas de pruebas en `.env.testing`.
 
 ### Google Maps
 
 Al desarrollar el mapa, habilita **Maps JavaScript API** en el proyecto de Google Cloud y coloca en el `.env` local la clave `GOOGLE_MAPS_API_KEY` y el identificador `GOOGLE_MAPS_MAP_ID` para los marcadores avanzados. Restringe la clave a Maps JavaScript API y a los sitios web autorizados, incluido el entorno local que utilice el equipo. La configuración está disponible para Blade mediante `config('services.google_maps')`. [Configuración de Maps JavaScript API](https://developers.google.com/maps/documentation/javascript/get-api-key) · [Marcadores avanzados](https://developers.google.com/maps/documentation/javascript/advanced-markers/start)
 
-La base arranca con una página de inicio y las migraciones estándar de Laravel. El mapa, los endpoints del piloto y la importación quedan como tareas del equipo. El Excel original, las credenciales y los datos reales se guardan fuera de Git.
+El backend incluye sesión y roles, fichas comerciales, catálogo, compatibilidad, oportunidades, propuestas y administración. El Excel original, las credenciales y los datos reales se guardan fuera de Git.
