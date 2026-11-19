@@ -19,7 +19,6 @@
     --sobre-verde: #ffffff;
     --mantequilla: #e9a93a;
     --mantequilla-claro: #fdf1d6;
-    --cielo: #2f7f9e;
 
     --positivo-texto: #14664a;
     --positivo-fondo: #e4f3ea;
@@ -54,7 +53,6 @@
         --sobre-verde: #06231a;
         --mantequilla: #f0bd5f;
         --mantequilla-claro: #3a2e14;
-        --cielo: #6ec2dd;
 
         --positivo-texto: #6fe3b0;
         --positivo-fondo: #14332a;
@@ -200,28 +198,6 @@ select {
     display: block;
 }
 
-.piloto {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.3rem 0.7rem;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--verde);
-    background: var(--verde-claro);
-    border: 1px solid rgba(31, 111, 74, 0.18);
-    border-radius: 999px;
-    white-space: nowrap;
-}
-
-.piloto__punto {
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 50%;
-    background: var(--verde);
-    box-shadow: 0 0 0 3px rgba(31, 111, 74, 0.18);
-}
-
 /* --------------------------------------------------------------------- heroe */
 
 .heroe {
@@ -253,30 +229,6 @@ select {
     max-width: 52ch;
     color: var(--tinta-suave);
     font-size: 0.98rem;
-}
-
-.heroe__adorno {
-    display: none;
-}
-
-@media (min-width: 72rem) {
-    .heroe__adorno {
-        display: block;
-        position: absolute;
-        z-index: 1;
-        right: max(1.5rem, calc((100% - var(--ancho)) / 2 + 1.5rem));
-        top: 50%;
-        width: 12rem;
-        transform: translateY(-50%);
-        pointer-events: none;
-        filter: drop-shadow(0 18px 30px rgba(18, 39, 31, 0.12));
-    }
-
-    .heroe__adorno svg {
-        display: block;
-        width: 100%;
-        height: auto;
-    }
 }
 
 /* ------------------------------------------------------------------ buscador */
@@ -349,118 +301,8 @@ select {
     background: var(--borde);
 }
 
-/* -------------------------------------------------------------------- resumen */
-
-.resumen {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.55rem;
-    margin: 1.25rem 0 0;
-    max-width: none;
-}
-
-@media (min-width: 44rem) {
-    .resumen {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-}
-
-.resumen__dato {
-    position: relative;
-    padding: 0.75rem 0.85rem;
-    background: var(--superficie);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio-chico);
-    box-shadow: var(--sombra-suave);
-    overflow: hidden;
-}
-
-.resumen__dato::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--borde-fuerte);
-}
-
-.resumen__dato--positivo::before { background: var(--verde); }
-.resumen__dato--pendiente::before { background: var(--mantequilla); }
-.resumen__dato--neutro::before { background: var(--cielo); }
-
-.resumen__dato dt {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--tinta-suave);
-}
-
-.resumen__dato dd {
-    margin: 0.1rem 0 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
-}
-
-/* --------------------------------------------------------------------- pasos */
-
 .contenido {
     padding: 0 1rem 2rem;
-}
-
-.pasos {
-    margin-top: 1.4rem;
-}
-
-.pasos__lista {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-@media (min-width: 48rem) {
-    .pasos__lista {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 0.6rem;
-    }
-}
-
-.paso {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    padding: 0.7rem 0.85rem;
-    background: var(--superficie);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio-chico);
-}
-
-.paso__numero {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 1.55rem;
-    height: 1.55rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--verde);
-    background: var(--verde-claro);
-    border-radius: 50%;
-}
-
-.paso__texto {
-    font-size: 0.86rem;
-    color: var(--tinta-suave);
-}
-
-.paso__texto strong {
-    color: var(--tinta);
 }
 
 /* ------------------------------------------------------------------ mensajes */
@@ -504,8 +346,8 @@ select {
 /* ------------------------------------------------------------- panel filtros */
 
 .panel-filtros {
-    margin-top: 1.4rem;
-    padding: 0.9rem;
+    margin-top: 0.65rem;
+    padding: 0.15rem 0.8rem 0.2rem;
     background: var(--superficie);
     border: 1px solid var(--borde);
     border-radius: var(--radio);
@@ -523,7 +365,8 @@ select {
     align-items: center;
     gap: 0.4rem;
     flex: none;
-    padding: 0.45rem 0.8rem;
+    min-height: 2.5rem;
+    padding: 0.35rem 0.65rem;
     font-size: 0.84rem;
     font-weight: 600;
     color: var(--tinta-suave);
@@ -662,7 +505,7 @@ select {
     align-items: flex-end;
     justify-content: space-between;
     gap: 0.75rem;
-    margin-top: 1.75rem;
+    margin-top: 1rem;
 }
 
 .barra-listado__grupo {
@@ -1003,37 +846,6 @@ select {
     margin-top: 1.1rem;
 }
 
-/* ------------------------------------------------------------------ esqueleto */
-
-.esqueleto {
-    padding: 1rem;
-    background: var(--superficie);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    overflow: hidden;
-}
-
-.esqueleto__linea {
-    height: 0.7rem;
-    border-radius: 999px;
-    background: linear-gradient(90deg, var(--superficie-suave) 25%, var(--borde) 50%, var(--superficie-suave) 75%);
-    background-size: 200% 100%;
-    animation: brillo 1.4s ease-in-out infinite;
-}
-
-.esqueleto__linea + .esqueleto__linea {
-    margin-top: 0.55rem;
-}
-
-.esqueleto__linea--titulo { width: 62%; height: 1rem; }
-.esqueleto__linea--corta { width: 38%; }
-.esqueleto__linea--media { width: 78%; }
-
-@keyframes brillo {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
 /* ----------------------------------------------------------------------- mapa */
 
 .mapa {
@@ -1088,7 +900,7 @@ select {
 
 .mapa__fila {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.1rem 0.75rem;
     padding: 0.5rem 0.7rem;
     background: var(--superficie-suave);
@@ -1438,5 +1250,116 @@ a.ficha__valor:hover {
     .contenido {
         padding-left: 1.5rem;
         padding-right: 1.5rem;
+    }
+}
+
+/* Directorio activo de Laravel */
+.cabecera--directorio {
+    padding: 0.65rem 0;
+}
+
+.cabecera--directorio .barra {
+    padding: 0 1rem;
+}
+
+.entrada-directorio {
+    padding-top: 1.5rem;
+}
+
+.entrada-directorio .heroe__titulo {
+    font-size: clamp(1.8rem, 6vw, 2.75rem);
+}
+
+.entrada-directorio .buscador {
+    margin-top: 0.8rem;
+}
+
+.controles-directorio {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
+    margin-top: 0.75rem;
+}
+
+.panel-filtros summary {
+    padding: 0.5rem 0.1rem;
+    color: var(--tinta);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.panel-filtros > summary:focus-visible {
+    outline: 2px solid var(--verde);
+    outline-offset: 3px;
+}
+
+.panel-filtros[open] {
+    padding-bottom: 0.7rem;
+}
+
+.panel-filtros .filtros {
+    margin-top: 0.25rem;
+}
+
+#estado-error .boton {
+    margin-top: 0.7rem;
+}
+
+.mapa__fila-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    grid-column: 1 / -1;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+}
+
+.mapa__fila-acciones .boton {
+    min-height: 2.75rem;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.82rem;
+}
+
+@media (min-width: 72rem) {
+    .cabecera--directorio .barra {
+        padding-inline: 1.5rem;
+    }
+}
+
+.mapa__ficha-marcador {
+    color: #12271f;
+    font-size: 0.9rem;
+}
+
+.mapa__ficha-marcador a {
+    color: #1f6f4a;
+    font-weight: 600;
+}
+
+@media (max-width: 23rem) {
+    .controles-directorio .chips,
+    .controles-directorio .barra-listado__acciones {
+        display: grid;
+        width: 100%;
+    }
+
+    .controles-directorio .chips {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .controles-directorio .chip {
+        justify-content: center;
+        padding-inline: 0.35rem;
+        text-align: center;
+        font-size: 0.78rem;
+    }
+
+    .controles-directorio .barra-listado__acciones {
+        grid-template-columns: max-content minmax(0, 1fr);
+    }
+
+    .controles-directorio .campo--orden {
+        min-width: 0;
     }
 }

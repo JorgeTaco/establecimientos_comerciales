@@ -1,16 +1,4 @@
-/*
- * Pantalla del directorio de establecimientos.
- *
- * Responsabilidades:
- *   1. Pedir los datos a DatosEstablecimientos (capa de datos aparte).
- *   2. Pintar tarjetas con acción "Ver ficha".
- *   3. Filtrar por texto, tipo, parroquia, estado y ubicación; ordenar.
- *   4. Abrir la ficha en un panel lateral con los datos del contrato.
- *   5. Mostrar el mapa con los comercios que tienen coordenadas o, si no hay
- *      clave, una lista clara sin romper la página.
- *
- * No duplica lógica del backend: solo presenta lo que devuelve la API.
- */
+/* Directorio, filtros, fichas y mapa del piloto. */
 (function () {
     'use strict';
 
@@ -20,12 +8,9 @@
     var POR_PAGINA = 24;
 
     var dom = {
-        origen: document.getElementById('origen-datos'),
-        resumenTotal: document.getElementById('resumen-total'),
-        resumenReciben: document.getElementById('resumen-reciben'),
-        resumenConfirmar: document.getElementById('resumen-confirmar'),
-        resumenUbicados: document.getElementById('resumen-ubicados'),
+        filtrosActivos: document.getElementById('filtros-activos'),
         buscar: document.getElementById('buscar'),
+        formBusqueda: document.getElementById('form-busqueda'),
         tipo: document.getElementById('filtro-tipo'),
         parroquia: document.getElementById('filtro-parroquia'),
         categoria: document.getElementById('filtro-categoria'),
@@ -44,6 +29,9 @@
         carga: document.getElementById('estado-carga'),
         vacio: document.getElementById('estado-vacio'),
         error: document.getElementById('estado-error'),
+        errorTexto: document.getElementById('estado-error-texto'),
+        reintentar: document.getElementById('reintentar'),
+        directorioVacio: document.getElementById('directorio-vacio'),
         botonLista: document.getElementById('boton-lista'),
         botonMapa: document.getElementById('boton-mapa'),
         vistaLista: document.getElementById('vista-lista'),
@@ -65,7 +53,7 @@
     };
 
     var estado = {
-        todos: [],
+        todos: null,
         visibles: [],
         filtros: { texto: '', tipo: '', parroquia: '', categoria: '', estado: '', interes: '', soloUbicados: false, cerca: null },
         orden: 'nombre',
@@ -78,8 +66,7 @@
         mapaIntentado: false,
         mapaError: null,
         consulta: 0,
-        origen: null,
-        origenVisible: null,
+        temporizadorBusqueda: null,
         fichaAbierta: null,
         focoPrevio: null
     };
@@ -95,14 +82,6 @@
             nodo.textContent = contenido;
         }
         return nodo;
-    }
-
-    /** Minúsculas y sin tildes, para que "Tanicuchi" encuentre "Tanicuchí". */
-    function plegar(texto) {
-        return String(texto || '')
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '');
     }
 
     function coordinar(valor) {
@@ -139,45 +118,95 @@
 
     function iniciar() {
         if (!datosApi) {
-            mostrarError('No se cargó la capa de datos del listado.');
+            mostrarError('No pudimos abrir el directorio. Recarga esta página.');
+            ocultar(dom.reintentar);
             return;
         }
 
-        pintarEsqueletos();
+        leerPreferencias();
         conectarEventos();
         marcarChipActivo();
-        fetch(config.categorias, { headers: { Accept: 'application/json' } })
-            .then(function (respuesta) {
-                if (!respuesta.ok) throw new Error('Categorías no disponibles');
-                return respuesta.json();
-            })
-            .then(function (datos) {
-                datos.categorias.forEach(function (categoria) {
-                    dom.categoria.append(opcion(String(categoria.id), categoria.nombre));
-                });
-            })
-            .catch(function () { dom.categoria.disabled = true; });
+        activarVista(estado.vista);
+        cargarCategorias();
+        aplicarFiltros();
+    }
 
-        // Intenta la API y, si aún no tiene datos, cae al JSON ficticio.
-        var cargarListado = datosApi.cargarConRespaldo || function (api, ejemplo, filtros) {
-            return datosApi.cargar(ejemplo).then(function (lista) {
-                return { lista: lista, origen: 'ejemplo', detalle: '' };
+    async function cargarCategorias() {
+        try {
+            var respuesta = await fetch(config.categorias, { headers: { Accept: 'application/json' } });
+            if (!respuesta.ok) throw new Error('Categorías no disponibles');
+            var datos = await respuesta.json();
+            dom.categoria.length = 1;
+            dom.categoria.options[0].text = 'Todas';
+            datos.categorias.forEach(function (categoria) {
+                dom.categoria.append(opcion(String(categoria.id), categoria.nombre));
             });
+            dom.categoria.disabled = false;
+            dom.categoria.value = estado.filtros.categoria;
+            if (estado.filtros.categoria && !dom.categoria.value) {
+                dom.categoria.append(opcion(estado.filtros.categoria, 'Categoría no disponible'));
+                dom.categoria.value = estado.filtros.categoria;
+            }
+        } catch {
+            dom.categoria.options[0].text = 'Categorías no disponibles';
+            dom.categoria.disabled = true;
+        }
+    }
+
+    function leerPreferencias() {
+        var parametros = new URLSearchParams(window.location.search);
+        var filtros = estado.filtros;
+        filtros.texto = (parametros.get('q') || '').slice(0, dom.buscar.maxLength);
+        filtros.tipo = (parametros.get('tipo') || '').slice(0, 80);
+        filtros.parroquia = (parametros.get('parroquia') || '').slice(0, 255);
+        var categoria = parametros.get('categoria_id') || '';
+        filtros.categoria = /^[1-9][0-9]{0,14}$/.test(categoria) ? categoria : '';
+        var recepcion = parametros.get('recepcionProveedores');
+        filtros.estado = Array.from(dom.chips).some(chip => chip.dataset.estado === recepcion) ? recepcion : '';
+        filtros.soloUbicados = parametros.get('ubicados') === '1';
+        if (dom.interes && ['0', '1'].includes(parametros.get('interes_declarado'))) {
+            dom.interes.value = filtros.interes = parametros.get('interes_declarado');
+        }
+        // Las coordenadas permanecen en el historial de esta pestaña.
+        filtros.cerca = window.history.state?.directorioCerca ?? null;
+        if (filtros.cerca) {
+            Object.entries(filtros.cerca).forEach(function ([campo, valor]) {
+                dom.buscarCerca.elements[campo].value = valor;
+            });
+            dom.ubicacionAviso.textContent = 'Búsqueda por radio activada.';
+        }
+        dom.buscar.value = filtros.texto;
+        dom.ubicados.checked = filtros.soloUbicados;
+        dom.orden.value = parametros.get('orden') || 'nombre';
+        dom.orden.value = estado.orden = dom.orden.value || 'nombre';
+        estado.vista = parametros.get('vista') === 'mapa' ? 'mapa' : 'lista';
+    }
+
+    function guardarPreferencias() {
+        var f = estado.filtros;
+        var url = new URL(window.location.href);
+        var parametros = {
+            q: f.texto.trim(),
+            tipo: f.tipo,
+            parroquia: f.parroquia,
+            categoria_id: f.categoria,
+            recepcionProveedores: f.estado,
+            interes_declarado: f.interes,
+            ubicados: f.soloUbicados ? '1' : '',
+            orden: estado.orden === 'nombre' ? '' : estado.orden,
+            vista: estado.vista === 'mapa' ? 'mapa' : ''
         };
+        Object.entries(parametros).forEach(function ([nombre, valor]) {
+            if (valor) url.searchParams.set(nombre, valor);
+            else url.searchParams.delete(nombre);
+        });
+        ['latitud', 'longitud', 'distancia_km'].forEach(nombre => url.searchParams.delete(nombre));
+        window.history.replaceState({ ...window.history.state, directorioCerca: f.cerca }, '', url);
 
-        cargarListado(config.api, config.datos, {})
-            .then(function (resultado) {
-                mostrarOrigen(resultado);
-                estado.origen = resultado.origen;
-                estado.todos = resultado.lista;
-                llenarSelectores(resultado.lista);
-                actualizarResumen(resultado.lista);
-                aplicarFiltros();
-                ocultar(dom.carga);
-            })
-            .catch(function (error) {
-                mostrarError('No se pudieron cargar los establecimientos. ' + error.message);
-            });
+        var activos = [f.tipo, f.parroquia, f.categoria, f.interes, f.soloUbicados, f.cerca].filter(Boolean).length;
+        dom.filtrosActivos.textContent = activos ? '(' + activos + ')' : '';
+        dom.filtrosActivos.hidden = !activos;
+        dom.limpiar.hidden = !hayFiltros() && estado.orden === 'nombre';
     }
 
     /** Convierte los filtros de la pantalla en los parámetros que espera la API. */
@@ -207,84 +236,58 @@
         return api;
     }
 
-    /** Carga de nuevo los datos cuando cambian los filtros o el texto de búsqueda. */
-    function recargarConFiltros() {
+    async function recargarConFiltros() {
         var consulta = ++estado.consulta;
+        var filtros = filtrosParaApi(estado.filtros);
+        var tieneFiltrosRemotos = Object.keys(filtros).length > 0;
+
         mostrar(dom.carga);
         ocultar(dom.error);
         ocultar(dom.vacio);
+        ocultar(dom.directorioVacio);
 
-        var apiFiltros = filtrosParaApi(estado.filtros);
+        try {
+            // El listado completo también aporta las opciones de tipo y parroquia.
+            var base = estado.todos;
+            if (!base?.length || !tieneFiltrosRemotos) {
+                base = await datosApi.buscar(config.api, {});
+                if (consulta !== estado.consulta) return;
+                estado.todos = base;
+                llenarSelectores(base);
+            }
 
-        var carga = estado.origen === 'ejemplo'
-            ? Promise.resolve({ lista: estado.todos, origen: 'ejemplo', detalle: '' })
-            : datosApi.cargarConRespaldo(config.api, config.datos, apiFiltros);
-        carga
-            .then(function (resultado) {
-                if (consulta !== estado.consulta) {
-                    return;
-                }
-                mostrarOrigen(resultado);
+            var lista = tieneFiltrosRemotos && base.length
+                ? await datosApi.buscar(config.api, filtros)
+                : base;
+            if (consulta !== estado.consulta) return;
 
-                var lista = resultado.origen === 'ejemplo' ? resultado.lista.filter(function (item) {
-                    var texto = plegar([item.nombre, item.parroquia, item.sector, item.direccion].join(' '));
-                    return (!apiFiltros.q || texto.includes(plegar(apiFiltros.q))) &&
-                        !apiFiltros.categoria_id && !apiFiltros.distancia_km &&
-                        (!apiFiltros.tipo || item.tipo === apiFiltros.tipo) &&
-                        (!apiFiltros.parroquia || item.parroquia === apiFiltros.parroquia) &&
-                        (!apiFiltros.recepcionProveedores || item.estadoClave === apiFiltros.recepcionProveedores) &&
-                        (!apiFiltros.interes_declarado || item.interesDeclarado === (apiFiltros.interes_declarado === '1'));
-                }) : resultado.lista;
-                if (estado.filtros.soloUbicados) {
-                    lista = lista.filter(function (item) {
-                        return item.tieneUbicacion;
-                    });
-                }
-
-                estado.origenVisible = resultado.origen;
-                estado.visibles = lista;
-                ordenarVisibles();
-                estado.pagina = 1;
-                pintarListado();
-                actualizarContadores();
-                dom.limpiar.hidden = !hayFiltros();
-                actualizarVistaMapa();
-                ocultar(dom.carga);
-            })
-            .catch(function (error) {
-                if (consulta !== estado.consulta) {
-                    return;
-                }
-                ocultar(dom.carga);
-                mostrarError('No se pudieron cargar los establecimientos. ' + error.message);
-            });
-    }
-
-    /** Aviso visible cuando la pantalla no está leyendo la API real. */
-    function mostrarOrigen(resultado) {
-        if (!dom.origen) {
-            return;
+            estado.visibles = estado.filtros.soloUbicados
+                ? lista.filter(item => item.tieneUbicacion)
+                : lista.slice();
+            ordenarVisibles();
+            estado.pagina = 1;
+            pintarListado();
+            actualizarContadores();
+            actualizarPaneles();
+            dom.directorioVacio.hidden = base.length !== 0;
+            dom.vacio.hidden = base.length === 0 || estado.visibles.length !== 0;
+        } catch (error) {
+            if (consulta !== estado.consulta) return;
+            estado.visibles = [];
+            pintarListado();
+            dom.contador.textContent = '';
+            dom.contadorLinea.textContent = '';
+            actualizarPaneles();
+            mostrarError(error.status === 422
+                ? 'Revisa los filtros de búsqueda y vuelve a intentar.'
+                : 'No pudimos cargar el directorio. Vuelve a intentar.');
+        } finally {
+            if (consulta === estado.consulta) ocultar(dom.carga);
         }
-
-        if (resultado.origen === 'api') {
-            ocultar(dom.origen);
-            return;
-        }
-
-        if (resultado.detalle) {
-            // El detalle técnico va a la consola, no a la pantalla.
-            window.console.warn('Respaldo de datos:', resultado.detalle);
-        }
-
-        dom.origen.textContent =
-            'Vista previa con ' + resultado.lista.length + ' comercios de ejemplo (ficticios). ' +
-            'La API todavía no tiene comercios cargados.';
-        mostrar(dom.origen);
     }
 
     function mostrarError(mensaje) {
-        ocultar(dom.carga);
-        dom.error.textContent = mensaje;
+        dom.errorTexto.textContent = mensaje;
         mostrar(dom.error);
     }
 
@@ -303,33 +306,32 @@
     // -------------------------------------------------------------- filtros/UI
 
     function llenarSelectores(lista) {
-        var tipos = {};
-        var parroquias = {};
+        var tipos = new Map();
+        var parroquias = new Set();
+        dom.tipo.length = 1;
+        dom.parroquia.length = 1;
 
         lista.forEach(function (item) {
             if (item.tipo) {
-                tipos[item.tipo] = item.tipoEtiqueta;
+                tipos.set(item.tipo, item.tipoEtiqueta);
             }
             if (item.parroquia) {
-                parroquias[item.parroquia] = true;
+                parroquias.add(item.parroquia);
             }
         });
 
-        Object.keys(tipos)
-            .sort(function (a, b) {
-                return tipos[a].localeCompare(tipos[b], 'es');
-            })
-            .forEach(function (valor) {
-                dom.tipo.appendChild(opcion(valor, tipos[valor]));
-            });
-
-        Object.keys(parroquias)
-            .sort(function (a, b) {
-                return a.localeCompare(b, 'es');
-            })
-            .forEach(function (valor) {
-                dom.parroquia.appendChild(opcion(valor, valor));
-            });
+        if (estado.filtros.tipo && !tipos.has(estado.filtros.tipo)) {
+            tipos.set(estado.filtros.tipo, estado.filtros.tipo);
+        }
+        if (estado.filtros.parroquia) parroquias.add(estado.filtros.parroquia);
+        Array.from(tipos)
+            .sort((a, b) => a[1].localeCompare(b[1], 'es'))
+            .forEach(([valor, etiqueta]) => dom.tipo.append(opcion(valor, etiqueta)));
+        Array.from(parroquias)
+            .sort((a, b) => a.localeCompare(b, 'es'))
+            .forEach(valor => dom.parroquia.append(opcion(valor, valor)));
+        dom.tipo.value = estado.filtros.tipo;
+        dom.parroquia.value = estado.filtros.parroquia;
     }
 
     function opcion(valor, etiqueta) {
@@ -340,15 +342,20 @@
     }
 
     function conectarEventos() {
-        var temporizador = null;
+        dom.buscar.addEventListener('input', function () {
+            estado.filtros.texto = dom.buscar.value.slice(0, dom.buscar.maxLength);
+            window.clearTimeout(estado.temporizadorBusqueda);
+            estado.temporizadorBusqueda = window.setTimeout(aplicarFiltros, 180);
+        });
 
-        dom.buscar.addEventListener('input', function (evento) {
-            var valor = evento.target.value;
-            window.clearTimeout(temporizador);
-            temporizador = window.setTimeout(function () {
-                estado.filtros.texto = valor;
-                aplicarFiltros();
-            }, 180);
+        dom.formBusqueda.addEventListener('submit', function (evento) {
+            evento.preventDefault();
+            aplicarFiltros();
+        });
+
+        dom.reintentar.addEventListener('click', function () {
+            if (dom.categoria.disabled) cargarCategorias();
+            aplicarFiltros();
         });
 
         dom.tipo.addEventListener('change', function (evento) {
@@ -400,7 +407,9 @@
 
         dom.orden.addEventListener('change', function (evento) {
             estado.orden = evento.target.value;
-            aplicarFiltros();
+            guardarPreferencias();
+            ordenarVisibles();
+            pintarListado();
         });
 
         Array.prototype.forEach.call(dom.chips, function (chip) {
@@ -418,12 +427,19 @@
             pintarListado();
         });
 
-        dom.botonLista.addEventListener('click', function () {
-            activarVista('lista');
-        });
-
-        dom.botonMapa.addEventListener('click', function () {
-            activarVista('mapa');
+        [dom.botonLista, dom.botonMapa].forEach(function (boton, indice) {
+            boton.addEventListener('click', function () {
+                activarVista(indice === 0 ? 'lista' : 'mapa');
+                guardarPreferencias();
+            });
+            boton.addEventListener('keydown', function (evento) {
+                var destinos = { ArrowLeft: 1 - indice, ArrowRight: 1 - indice, Home: 0, End: 1 };
+                if (!Object.hasOwn(destinos, evento.key)) return;
+                evento.preventDefault();
+                var destino = [dom.botonLista, dom.botonMapa][destinos[evento.key]];
+                destino.click();
+                destino.focus();
+            });
         });
         dom.cargarMapa.addEventListener('click', function () {
             if (estado.mapaIntentado || !estado.visibles.some(function (item) { return item.tieneUbicacion; })) {
@@ -481,7 +497,8 @@
     }
 
     function aplicarFiltros() {
-        estado.pagina = 1;
+        window.clearTimeout(estado.temporizadorBusqueda);
+        guardarPreferencias();
         recargarConFiltros();
     }
 
@@ -520,57 +537,18 @@
         });
     }
 
-    function actualizarResumen(lista) {
-        dom.resumenTotal.textContent = lista.length;
-        dom.resumenReciben.textContent = lista.filter(function (item) {
-            return item.estadoClave === 'recibe_propuestas';
-        }).length;
-        dom.resumenConfirmar.textContent = lista.filter(function (item) {
-            return item.estadoClave === 'por_confirmar';
-        }).length;
-        dom.resumenUbicados.textContent = lista.filter(function (item) {
-            return item.tieneUbicacion;
-        }).length;
-    }
-
     function actualizarContadores() {
         var total = estado.todos.length;
         var visibles = estado.visibles.length;
-        var reciben = estado.visibles.filter(function (item) {
-            return item.estadoClave === 'recibe_propuestas';
-        }).length;
-
         dom.contador.textContent = visibles === total
             ? '(' + total + ')'
             : '(' + visibles + ' de ' + total + ')';
-
-        if (visibles === 0) {
-            dom.contadorLinea.textContent = 'Sin resultados con estos filtros';
-        } else if (visibles === total) {
-            dom.contadorLinea.textContent =
-                total + (total === 1 ? ' comercio' : ' comercios') +
-                ' · ' + reciben + (reciben === 1 ? ' recibe propuestas' : ' reciben propuestas');
-        } else {
-            dom.contadorLinea.textContent =
-                'Mostrando ' + visibles + ' de ' + total + ' · ' +
-                reciben + (reciben === 1 ? ' recibe propuestas' : ' reciben propuestas');
+        if (!visibles) {
+            dom.contadorLinea.textContent = '';
+            return;
         }
-
-        dom.vacio.hidden = visibles !== 0;
-    }
-
-    // ------------------------------------------------------------------ esqueleto
-
-    function pintarEsqueletos() {
-        dom.listado.textContent = '';
-
-        for (var i = 0; i < 6; i += 1) {
-            var li = crear('li', 'esqueleto');
-            li.appendChild(crear('div', 'esqueleto__linea esqueleto__linea--titulo'));
-            li.appendChild(crear('div', 'esqueleto__linea esqueleto__linea--media'));
-            li.appendChild(crear('div', 'esqueleto__linea esqueleto__linea--corta'));
-            dom.listado.appendChild(li);
-        }
+        var reciben = estado.visibles.filter(item => item.estadoClave === 'recibe_propuestas').length;
+        dom.contadorLinea.textContent = reciben + (reciben === 1 ? ' recibe propuestas' : ' reciben propuestas');
     }
 
     // ------------------------------------------------------------------- tarjetas
@@ -663,8 +641,6 @@
 
     function activarVista(vista) {
         estado.vista = vista;
-        dom.vistaLista.hidden = vista !== 'lista';
-        dom.vistaMapa.hidden = vista !== 'mapa';
 
         [dom.botonLista, dom.botonMapa].forEach(function (boton, indice) {
             var activo = (indice === 0) === (vista === 'lista');
@@ -673,7 +649,14 @@
             boton.tabIndex = activo ? 0 : -1;
         });
 
-        actualizarVistaMapa();
+        actualizarPaneles();
+    }
+
+    function actualizarPaneles() {
+        var hayResultados = estado.visibles.length > 0;
+        dom.vistaLista.hidden = !hayResultados || estado.vista !== 'lista';
+        dom.vistaMapa.hidden = !hayResultados || estado.vista !== 'mapa';
+        if (!dom.vistaMapa.hidden) actualizarVistaMapa();
     }
 
     function actualizarVistaMapa() {
@@ -765,6 +748,13 @@
             fila.appendChild(
                 crear('span', 'mapa__fila-parroquia', item.parroquia || 'Sin parroquia')
             );
+            var acciones = crear('div', 'mapa__fila-acciones');
+            var ficha = crear('button', 'boton boton--secundario', 'Ver ficha');
+            ficha.type = 'button';
+            ficha.setAttribute('aria-label', 'Ver ficha de ' + item.nombre);
+            ficha.addEventListener('click', () => abrirFicha(item, ficha));
+            acciones.append(ficha, enlaceComoLlegar(item, 'boton boton--secundario'));
+            fila.append(acciones);
             dom.mapaUbicados.appendChild(fila);
         });
 
@@ -874,13 +864,13 @@
     }
 
     function crearMarcador(posicion, item) {
-        var ventana = new window.google.maps.InfoWindow({
-            content:
-                '<strong>' + escapar(item.nombre) + '</strong><br>' +
-                escapar(item.tipoEtiqueta) +
-                (item.parroquia ? ' · ' + escapar(item.parroquia) : '') +
-                '<br>' + escapar(item.estadoEtiqueta)
-        });
+        var contenido = crear('div', 'mapa__ficha-marcador');
+        var identificacion = [item.tipoEtiqueta, item.parroquia].filter(Boolean).join(' · ');
+        var acciones = crear('div', 'mapa__fila-acciones');
+        acciones.append(enlaceFichaCompleta(item, '', 'Ver ficha'), enlaceComoLlegar(item));
+        contenido.append(crear('strong', null, item.nombre), crear('p', null, identificacion),
+            crear('p', null, item.estadoEtiqueta), acciones);
+        var ventana = new window.google.maps.InfoWindow({ content: contenido });
 
         if (estado.marcadoresAvanzados) {
             var avanzado = new window.google.maps.marker.AdvancedMarkerElement({
@@ -903,14 +893,6 @@
         return clasico;
     }
 
-    function escapar(valor) {
-        return String(valor)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
     // --------------------------------------------------------------------- ficha
 
     function abrirFicha(item, origen) {
@@ -919,7 +901,7 @@
         }
 
         estado.focoPrevio = origen || document.activeElement;
-        estado.fichaAbierta = item.id || item.nombre;
+        estado.fichaAbierta = {};
 
         dom.fichaNombre.textContent = item.nombre;
         dom.fichaMeta.textContent = [item.tipoEtiqueta, item.parroquia].filter(Boolean).join(' · ');
@@ -934,20 +916,17 @@
         document.body.classList.add('sin-scroll');
         dom.fichaCerrar.focus();
 
-        var pedirFicha = datosApi.cargarFicha || function (api, registro) {
-            return Promise.resolve({ ficha: registro, origen: 'ejemplo' });
-        };
-
-        var vieneDeLaApi = estado.origenVisible === 'api';
-        pedirFicha(config.apiBase, item, !vieneDeLaApi).then(function (resultado) {
-            if (estado.fichaAbierta !== (item.id || item.nombre)) {
-                return;
-            }
-            pintarFicha(resultado.ficha, vieneDeLaApi);
+        var fichaAbierta = estado.fichaAbierta;
+        datosApi.cargarFicha(config.apiBase, item).then(function (ficha) {
+            if (estado.fichaAbierta === fichaAbierta) pintarFicha(ficha);
+        }).catch(function () {
+            if (estado.fichaAbierta !== fichaAbierta) return;
+            dom.fichaCuerpo.textContent = 'No pudimos cargar los detalles del comercio.';
+            pintarAccionesFicha(item);
         });
     }
 
-    function pintarFicha(ficha, puedeAbrirFicha) {
+    function pintarFicha(ficha) {
         var detalle = ficha.detalle || {};
         dom.fichaCuerpo.textContent = '';
 
@@ -1044,31 +1023,35 @@
             dom.fichaCuerpo.appendChild(verificado);
         }
 
-        pintarAccionesFicha(ficha, puedeAbrirFicha);
+        pintarAccionesFicha(ficha);
     }
 
-    function pintarAccionesFicha(ficha, puedeAbrirFicha) {
+    function enlaceFichaCompleta(ficha, clase, etiqueta) {
+        var enlace = crear('a', clase, etiqueta);
+        enlace.href = config.fichas + '/' + encodeURIComponent(ficha.id);
+        return enlace;
+    }
+
+    function enlaceComoLlegar(ficha, clase) {
+        var enlace = crear('a', clase, 'Cómo llegar');
+        enlace.href = ficha.detalle?.comoLlegarUrl ||
+            'https://www.google.com/maps/dir/?api=1&destination=' +
+            encodeURIComponent(ficha.latitud + ',' + ficha.longitud);
+        enlace.target = '_blank';
+        enlace.rel = 'noopener noreferrer';
+        return enlace;
+    }
+
+    function pintarAccionesFicha(ficha) {
         var detalle = ficha.detalle || {};
         dom.fichaAcciones.textContent = '';
 
-        if (puedeAbrirFicha && ficha.id) {
-            var fichaCompleta = crear('a', 'boton', 'Ver ficha completa');
-            fichaCompleta.href = config.fichas + '/' + encodeURIComponent(ficha.id);
-            dom.fichaAcciones.appendChild(fichaCompleta);
+        if (ficha.id) {
+            dom.fichaAcciones.appendChild(enlaceFichaCompleta(ficha, 'boton', 'Ver ficha completa'));
         }
 
         if (ficha.tieneUbicacion) {
-            var enlace = document.createElement('a');
-            enlace.className = 'boton';
-            // La API ya entrega la URL armada; si no viene, se arma con las coordenadas.
-            enlace.href =
-                detalle.comoLlegarUrl ||
-                'https://www.google.com/maps/dir/?api=1&destination=' +
-                    encodeURIComponent(ficha.latitud + ',' + ficha.longitud);
-            enlace.target = '_blank';
-            enlace.rel = 'noopener noreferrer';
-            enlace.textContent = 'Cómo llegar';
-            dom.fichaAcciones.appendChild(enlace);
+            dom.fichaAcciones.appendChild(enlaceComoLlegar(ficha, 'boton'));
         } else if (detalle.direccion) {
             var buscar = document.createElement('a');
             buscar.className = 'boton';

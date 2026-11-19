@@ -1,0 +1,31 @@
+.navegacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.85rem;
+}
+
+.navegacion a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    color: var(--verde);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.navegacion a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+.navegacion a:focus-visible {
+    outline: 2px solid var(--verde);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+.navegacion form {
+    margin: 0;
+}

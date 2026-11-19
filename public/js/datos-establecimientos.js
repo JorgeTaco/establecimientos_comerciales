@@ -6,8 +6,8 @@
  * normalizados que devuelve este archivo.
  *
  * Origen real: GET /api/establecimientos/buscar y GET /api/establecimientos/{id}.
- * Respaldo: el JSON ficticio de public/datos/ (ignorado por Git en su versión
- * real). El contrato de la API usa snake_case en la ficha y camelCase en el
+ * La vista previa pública consulta su propio JSON ficticio. El contrato de la
+ * API usa snake_case en la ficha y camelCase en el
  * listado; aquí se aceptan ambas formas para no romper con ningún origen.
  */
 (function () {
@@ -255,7 +255,9 @@
     function pedir(url) {
         return fetch(url, { headers: { Accept: 'application/json' } }).then(function (respuesta) {
             if (!respuesta.ok) {
-                throw new Error('El servidor respondió ' + respuesta.status);
+                var error = new Error('El servidor respondió ' + respuesta.status);
+                error.status = respuesta.status;
+                throw error;
             }
             return respuesta.json();
         });
@@ -290,71 +292,26 @@
         return params.length ? '?' + params.join('&') : '';
     }
 
-    /**
-     * Intenta primero la API real. Si no responde, falla o no tiene comercios
-     * cargados, usa el JSON ficticio. Nunca inventa datos: informa el origen.
-     *
-     * @param {string} apiUrl endpoint de la API (GET /api/establecimientos/buscar)
-     * @param {string} ejemploUrl JSON ficticio de respaldo
-     * @param {object} [filtros] filtros de búsqueda a enviar a la API
-     * @returns {Promise<{lista: Array, origen: string, detalle: string}>}
-     */
-    function cargarConRespaldo(apiUrl, ejemploUrl, filtros) {
-        var detalle = '';
-        var consulta = queryString(filtros || {});
-        var urlConFiltros = apiUrl + consulta;
-
-        return pedir(urlConFiltros)
-            .then(function (cuerpo) {
-                var listaNormalizada = extraerLista(cuerpo).map(normalizar);
-                if (listaNormalizada.length === 0 && !consulta) {
-                    throw new Error('la API no tiene comercios cargados');
-                }
-                return { lista: listaNormalizada, origen: 'api', detalle: '' };
-            })
-            .catch(function (error) {
-                detalle = error.message;
-                return cargar(ejemploUrl).then(function (listaNormalizada) {
-                    return { lista: listaNormalizada, origen: 'ejemplo', detalle: detalle };
-                });
-            });
+    async function buscar(apiUrl, filtros) {
+        var cuerpo = await pedir(apiUrl + queryString(filtros));
+        if (!cuerpo || !Array.isArray(cuerpo.establecimientos)) {
+            throw new Error('El directorio recibió una respuesta inválida.');
+        }
+        return cuerpo.establecimientos.map(normalizar);
     }
 
-    /**
-     * Descarga la ficha de un comercio.
-     * Si la API no responde, devuelve el registro que ya está en el listado
-     * (el ejemplo ficticio trae los campos de la ficha).
-     *
-     * @param {string} apiBaseUrl base de la API (GET /api/establecimientos)
-     * @param {object} registro comercio ya normalizado del listado
-     * @param {boolean} usarEjemplo indica que el registro viene del JSON ficticio
-     * @returns {Promise<{ficha: object, origen: string}>}
-     */
-    function cargarFicha(apiBaseUrl, registro, usarEjemplo) {
-        var fuente = (registro && registro.crudo) || registro || {};
-
-        if (usarEjemplo || !registro || !registro.id) {
-            return Promise.resolve({ ficha: normalizarFicha(fuente, registro), origen: 'ejemplo' });
+    async function cargarFicha(apiBaseUrl, registro) {
+        var url = apiBaseUrl + '/' + encodeURIComponent(registro.id);
+        var detalle = extraerFicha(await pedir(url));
+        if (!detalle || !detalle.id) {
+            throw new Error('No se recibió la ficha.');
         }
-
-        var url = String(apiBaseUrl).replace(/\/+$/, '') + '/' + encodeURIComponent(registro.id);
-
-        return pedir(url)
-            .then(function (cuerpo) {
-                var detalle = extraerFicha(cuerpo);
-                if (!detalle) {
-                    throw new Error('la ficha llegó vacía');
-                }
-                return { ficha: normalizarFicha(detalle, registro), origen: 'api' };
-            })
-            .catch(function () {
-                return { ficha: normalizarFicha(fuente, registro), origen: 'ejemplo' };
-            });
+        return normalizarFicha(detalle, registro);
     }
 
     window.DatosEstablecimientos = {
         cargar: cargar,
-        cargarConRespaldo: cargarConRespaldo,
+        buscar: buscar,
         cargarFicha: cargarFicha,
         ESTADOS: ESTADOS,
         TIPOS: TIPOS,
