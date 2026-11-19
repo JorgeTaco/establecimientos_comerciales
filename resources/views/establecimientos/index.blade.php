@@ -73,6 +73,17 @@
                 </select>
             </div>
 
+            @if (config('app.publicar_interes_encuesta'))
+                <div class="campo">
+                    <label for="filtro-interes">Interés declarado en la encuesta</label>
+                    <select id="filtro-interes" name="interes_declarado">
+                        <option value="">Todos</option>
+                        <option value="1">Sí</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+            @endif
+
             <button type="button" class="boton-secundario" id="limpiar" hidden>
                 Limpiar filtros
             </button>
@@ -119,7 +130,7 @@
 
     <footer class="pie">
         <p>
-            El listado consulta <code>/api/establecimientos</code>. Mientras la base no tenga
+            El listado consulta <code>/api/establecimientos/buscar</code>. Mientras la base no tenga
             comercios cargados, se muestra el ejemplo ficticio de
             <code>public/datos/</code>.
         </p>
@@ -133,7 +144,7 @@
     <script>
         window.ESTABLECIMIENTOS = {
             datos: @json(asset('datos/establecimientos.ejemplo.json')),
-            api: @json(url('/api/establecimientos')),
+            api: @json(url('/api/establecimientos/buscar')),
             googleMapsKey: @json(config('services.google_maps.key')),
             googleMapsMapId: @json(config('services.google_maps.map_id')),
             centro: { lat: -0.9333, lng: -78.6167 }

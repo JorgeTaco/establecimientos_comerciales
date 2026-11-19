@@ -44,7 +44,7 @@ class ImportadorEstablecimientos
             }
 
             $vistas[$clave] = $fila['numero'];
-            $candidatos = $this->datos->duplicados($datos);
+            $candidatos = $this->datos->duplicadosImportacion($datos);
             if ($candidatos !== []) {
                 $duplicados[] = ['fila' => $fila['numero'], 'candidatos' => $candidatos];
 

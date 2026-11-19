@@ -50,6 +50,9 @@ class MapeadorEstablecimientos
         'email' => 'correo',
         'horario' => 'horario',
         'horario de atencion' => 'horario',
+        'horario proveedores' => 'horario_proveedores',
+        'horario de atencion a proveedores' => 'horario_proveedores',
+        'productos buscados' => 'productos_buscados',
         'clientes dia' => 'clientes_dia',
         'n aprox clientes dia' => 'clientes_dia',
         'comercializa lacteos' => 'comercializa_lacteos',
@@ -178,7 +181,7 @@ class MapeadorEstablecimientos
         $telefono = $this->normalizarTelefono($leer('telefono'), $avisos);
         $correo = $this->normalizarCorreo($leer('correo'), $avisos);
         $horario = $this->texto($leer('horario'));
-        $productos = $this->lista($leer('productos_lacteos'));
+        $productos = $leer('productos_lacteos');
         $comercializa = $this->booleano($leer('comercializa_lacteos'), $avisos, 'Comercializa lácteos');
         $refrigeracion = $this->booleano($leer('refrigeracion'), $avisos, 'Refrigeración');
         $interes = $this->booleano($leer('interes_nuevos_proveedores'), $avisos, 'Interés en nuevos proveedores');
@@ -203,14 +206,15 @@ class MapeadorEstablecimientos
             'direccion' => $direccion,
             'canton' => $canton,
             'sector' => $sector,
-            'productos_buscados' => $productos,
+            'productos_buscados' => $this->lista($leer('productos_buscados')),
             'tiene_refrigeracion' => $refrigeracion,
             'contacto_nombre' => $this->texto($leer('propietario')),
             'contacto_telefono' => $telefono,
             'contacto_email' => $correo,
             'canales_contacto' => $canales === [] ? null : $canales,
             'autorizar_contacto' => false,
-            'horario_proveedores' => $horario,
+            'horario_atencion' => $horario,
+            'horario_proveedores' => $this->texto($leer('horario_proveedores')),
         ];
 
         $perfil = array_filter(
@@ -239,7 +243,8 @@ class MapeadorEstablecimientos
             'provincia' => $provincia,
             'clientes_dia' => $this->texto($leer('clientes_dia')),
             'comercializa_lacteos' => $comercializa,
-            'productos_lacteos' => $this->texto($leer('productos_lacteos')),
+            'productos_lacteos' => $this->texto($productos),
+            'categorias_lacteas' => CategoriasLacteas::desdeProductos($productos),
             'marcas' => $this->texto($leer('marcas')),
             'vende_locales' => $this->texto($leer('vende_locales')),
             'mayor_demanda' => $this->texto($leer('mayor_demanda')),

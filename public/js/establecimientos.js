@@ -22,6 +22,7 @@
         tipo: document.getElementById('filtro-tipo'),
         parroquia: document.getElementById('filtro-parroquia'),
         estado: document.getElementById('filtro-estado'),
+        interes: document.getElementById('filtro-interes'),
         limpiar: document.getElementById('limpiar'),
         contador: document.getElementById('contador'),
         listado: document.getElementById('listado'),
@@ -39,7 +40,7 @@
     var estado = {
         todos: [],
         visibles: [],
-        filtros: { texto: '', tipo: '', parroquia: '', estado: '' },
+        filtros: { texto: '', tipo: '', parroquia: '', estado: '', interes: '' },
         mapa: null,
         marcadores: [],
         marcadoresAvanzados: false,
@@ -209,12 +210,22 @@
             aplicarFiltros();
         });
 
+        if (dom.interes) {
+            dom.interes.addEventListener('change', function (evento) {
+                estado.filtros.interes = evento.target.value;
+                aplicarFiltros();
+            });
+        }
+
         dom.limpiar.addEventListener('click', function () {
-            estado.filtros = { texto: '', tipo: '', parroquia: '', estado: '' };
+            estado.filtros = { texto: '', tipo: '', parroquia: '', estado: '', interes: '' };
             dom.buscar.value = '';
             dom.tipo.value = '';
             dom.parroquia.value = '';
             dom.estado.value = '';
+            if (dom.interes) {
+                dom.interes.value = '';
+            }
             aplicarFiltros();
             dom.buscar.focus();
         });
@@ -222,7 +233,7 @@
 
     function hayFiltros() {
         var f = estado.filtros;
-        return Boolean(f.texto || f.tipo || f.parroquia || f.estado);
+        return Boolean(f.texto || f.tipo || f.parroquia || f.estado || f.interes);
     }
 
     function aplicarFiltros() {
@@ -239,8 +250,11 @@
             if (f.estado && item.estadoClave !== f.estado) {
                 return false;
             }
+            if (f.interes && item.interesDeclarado !== (f.interes === '1')) {
+                return false;
+            }
             if (texto) {
-                var buscable = plegar(item.nombre + ' ' + item.parroquia + ' ' + item.tipo + ' ' + item.tipoEtiqueta);
+                var buscable = plegar([item.nombre, item.parroquia, item.sector, item.direccion, item.tipoEtiqueta].join(' '));
                 if (buscable.indexOf(texto) === -1) {
                     return false;
                 }
@@ -302,8 +316,16 @@
             meta.appendChild(crear('span', 'tarjeta__separador', '·'));
             meta.appendChild(crear('span', 'tarjeta__parroquia', item.parroquia));
         }
+        if (item.sector) {
+            meta.appendChild(crear('span', 'tarjeta__separador', '·'));
+            meta.appendChild(crear('span', '', item.sector));
+        }
         contenedor.appendChild(meta);
 
+        if (item.interesDeclarado !== null) {
+            var interes = item.interesDeclarado ? 'Sí' : 'No';
+            contenedor.appendChild(crear('p', 'tarjeta__meta', 'Interés declarado en la encuesta: ' + interes));
+        }
         contenedor.appendChild(ubicacion(item));
 
         return contenedor;
@@ -351,24 +373,27 @@
 
         if (!config.googleMapsKey) {
             avisoMapa(
-                'El mapa aún no está configurado: falta GOOGLE_MAPS_API_KEY en el archivo .env. ' +
-                    'Mientras tanto, estos son los comercios con coordenadas:',
+                'El mapa aún no está configurado. Comercios con coordenadas:',
                 ubicados
             );
             return;
         }
 
+        var errorAutenticacion = false;
+        function mostrarMapaNoDisponible() {
+            errorAutenticacion = true;
+            estado.mapaListo = false;
+            avisoMapa('Google Maps no está disponible. Comercios con coordenadas:', ubicados);
+        }
+
+        window.gm_authFailure = mostrarMapaNoDisponible;
         cargarGoogleMaps()
             .then(function () {
-                crearMapa(ubicados);
+                if (!errorAutenticacion) {
+                    crearMapa(ubicados);
+                }
             })
-            .catch(function () {
-                avisoMapa(
-                    'No se pudo cargar Google Maps. Revisa que la clave permita Maps JavaScript API ' +
-                        'y que este sitio esté autorizado. Comercios con coordenadas:',
-                    ubicados
-                );
-            });
+            .catch(mostrarMapaNoDisponible);
     }
 
     function cargarGoogleMaps() {
@@ -398,11 +423,8 @@
             };
             document.head.appendChild(script);
 
-            // Si en 8 segundos no llamó al callback, asumimos que falló.
             window.setTimeout(function () {
-                if (!(window.google && window.google.maps)) {
-                    rechazar(new Error('Tiempo de espera agotado'));
-                }
+                rechazar(new Error('Tiempo de espera agotado'));
             }, 8000);
         });
     }

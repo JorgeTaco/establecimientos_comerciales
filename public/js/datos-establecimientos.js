@@ -5,10 +5,8 @@
  * llaman sus campos. La pantalla (establecimientos.js) solo usa los objetos ya
  * normalizados que devuelve este archivo.
  *
- * Hoy lee el JSON ficticio de datos/ejemplos/establecimientos.json copiado a
- * public/datos/. Cuando Jorge publique GET /api/establecimientos, el contrato es
- * idéntico: {"establecimientos": [...]}. Cambiar de origen es cambiar la URL
- * que recibe cargar().
+ * Lee la búsqueda de Laravel y admite el JSON ficticio como respaldo.
+ * Ambas fuentes devuelven {"establecimientos": [...]}.
  */
 (function () {
     'use strict';
@@ -26,7 +24,9 @@
     var TIPOS = {
         tienda: 'Tienda',
         minimercado: 'Minimercado',
-        supermercado: 'Supermercado'
+        supermercado: 'Supermercado',
+        distribuidor: 'Distribuidor',
+        panaderia: 'Panadería'
     };
 
     function texto(valor) {
@@ -65,6 +65,9 @@
             tipo: tipo,
             tipoEtiqueta: TIPOS[tipo] || capitalizar(tipo) || 'Sin tipo',
             parroquia: texto(registro.parroquia),
+            sector: texto(registro.sector),
+            direccion: texto(registro.direccion),
+            interesDeclarado: typeof registro.interesDeclarado === 'boolean' ? registro.interesDeclarado : null,
             latitud: latitud,
             longitud: longitud,
             tieneUbicacion: latitud !== null && longitud !== null,
@@ -107,7 +110,7 @@
      * cargados, usa el JSON ficticio. Nunca inventa datos: informa el origen
      * para que la pantalla pueda avisarlo.
      *
-     * @param {string} apiUrl endpoint de la API (GET /api/establecimientos)
+     * @param {string} apiUrl endpoint de la API (GET /api/establecimientos/buscar)
      * @param {string} ejemploUrl JSON ficticio de respaldo
      * @returns {Promise<{lista: Array, origen: string, detalle: string}>}
      */

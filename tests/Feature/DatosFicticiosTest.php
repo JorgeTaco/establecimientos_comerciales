@@ -15,9 +15,12 @@ class DatosFicticiosTest extends TestCase
     {
         $this->seed();
 
-        $this->assertDatabaseCount('categorias', 5);
+        $this->assertDatabaseCount('categorias', 9);
         $this->assertDatabaseCount('establecimientos', 3);
         $this->assertDatabaseCount('perfiles_comerciales', 3);
+        foreach (['Leche', 'Queso', 'Yogurt', 'Mantequilla'] as $nombre) {
+            $this->assertDatabaseHas('categorias', ['nombre' => $nombre, 'activa' => true]);
+        }
 
         $ejemplo = json_decode(file_get_contents(base_path('datos/ejemplos/establecimientos.json')), true);
         $this->assertCount(3, $ejemplo['establecimientos']);

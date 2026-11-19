@@ -13,6 +13,9 @@ class FichaEstablecimientoResource extends JsonResource
     {
         $perfil = $this->perfilComercial;
         $ubicacion = (new EstablecimientoResource($this->resource))->toArray($request);
+        if (config('app.publicar_interes_encuesta')) {
+            $ubicacion['interesDeclarado'] = $perfil?->interes_encuesta;
+        }
         $destino = $ubicacion['latitud'] === null
             ? $perfil?->direccion
             : $ubicacion['latitud'].','.$ubicacion['longitud'];
@@ -36,6 +39,7 @@ class FichaEstablecimientoResource extends JsonResource
             'categorias' => $this->categorias->map->only(['id', 'nombre'])->values(),
             'productos_buscados' => $perfil?->productos_buscados ?? [],
             'tiene_refrigeracion' => $perfil?->tiene_refrigeracion,
+            'horario_atencion' => $perfil?->horario_atencion,
             'horario_proveedores' => $perfil?->horario_proveedores,
             'requisitos' => $perfil?->requisitos,
             'modalidad_compra' => $perfil?->modalidad_compra,

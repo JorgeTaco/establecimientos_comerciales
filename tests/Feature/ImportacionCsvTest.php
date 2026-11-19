@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Categoria;
+use Database\Seeders\CategoriaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -44,7 +45,7 @@ class ImportacionCsvTest extends TestCase
 
     public function test_mapea_las_columnas_reales_del_excel(): void
     {
-        Categoria::query()->create(['nombre' => 'Lácteos']);
+        $this->seed(CategoriaSeeder::class);
         $archivo = base_path('datos/ejemplos/establecimientos-importar.csv');
         $destino = sys_get_temp_dir().DIRECTORY_SEPARATOR.uniqid('ejemplo-', true);
 
@@ -56,7 +57,7 @@ class ImportacionCsvTest extends TestCase
             $this->assertSame(3, $informe['totales']['filas']);
             $this->assertSame(3, $informe['totales']['validas']);
             $this->assertSame(0, $informe['totales']['invalidas']);
-            $this->assertContains('Productos lacteos que comercializa', $informe['sin_mapear']);
+            $this->assertNotContains('Productos lacteos que comercializa', $informe['sin_mapear']);
 
             $lote = json_decode(file_get_contents($destino.'/lote-1.json'), true);
             $primera = $lote['filas'][0];
@@ -67,9 +68,11 @@ class ImportacionCsvTest extends TestCase
             $this->assertSame('Mulaló, Calle Ficticia 123', $primera['perfil']['direccion']);
             $this->assertSame('Ana Ficticia', $primera['perfil']['contacto_nombre']);
             $this->assertSame('0991234567', $primera['perfil']['contacto_telefono']);
-            $this->assertSame('08:00 a 20:00', $primera['perfil']['horario_proveedores']);
+            $this->assertSame('08:00 a 20:00', $primera['perfil']['horario_atencion']);
+            $this->assertNull($primera['perfil']['horario_proveedores']);
             $this->assertTrue($primera['perfil']['tiene_refrigeracion']);
-            $this->assertSame(['Leche'], $primera['perfil']['productos_buscados']);
+            $this->assertArrayNotHasKey('productos_buscados', $primera['perfil']);
+            $this->assertContains(Categoria::query()->where('nombre', 'Leche')->value('id'), $primera['categorias']);
             $this->assertTrue($primera['interes_encuesta']);
 
             $segunda = $lote['filas'][1];

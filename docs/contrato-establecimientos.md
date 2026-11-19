@@ -6,9 +6,9 @@
 | --- | --- | --- |
 | `id` | Cadena estable | Identifica el comercio en la lista y al abrir su ficha |
 | `nombre` | Cadena | Nombre para mostrar |
-| `tipo` | Cadena | Tipo de comercio normalizado. El ejemplo incluye tienda, minimercado y supermercado |
+| `tipo` | Cadena | Los tipos normalizados de la encuesta son `tienda`, `minimercado`, `supermercado`, `distribuidor` y `panaderia`. `Minimarket` se importa como `minimercado`. La API admite otros tipos. |
 | `parroquia` | Cadena | Parroquia del establecimiento |
 | `latitud`, `longitud` | Números o ambos `null` | Coordenadas decimales. Sin coordenadas, la ficha aparece en el listado y queda pendiente de ubicar en el mapa |
 | `recepcionProveedores` | `recibe_propuestas`, `no_recibe_por_ahora` o `por_confirmar` | Estado actual de recepción de propuestas |
 
-Al preparar la importación, el interés declarado en la encuesta se conserva como dato de origen. La ficha empieza con `por_confirmar` hasta verificar la recepción de propuestas. El listado se limita a los campos de la tabla y los contactos autorizados se incorporarán a la ficha en una entrega posterior.
+El listado se limita a los campos de la tabla. Usa [la búsqueda ampliada y la ficha](backend.md#directorio-y-ficha-comercial) para consultar dirección, sector, foto y otros datos del perfil. La recepción de un comercio importado empieza en `por_confirmar`.

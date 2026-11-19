@@ -25,7 +25,7 @@ class DatosEstablecimiento
             'recepcion_proveedores' => ['sometimes', 'required', Rule::in(FlujoComercial::RECEPCION)],
             'categorias' => ['sometimes', 'array', 'list', 'max:30'],
             'categorias.*' => ['required', 'distinct', Rule::exists('categorias', 'id')->where('activa', true)],
-            'perfil' => ['sometimes', 'array:foto_url,direccion,canton,sector,productos_buscados,tiene_refrigeracion,contacto_nombre,contacto_telefono,contacto_email,canales_contacto,autorizar_contacto,horario_proveedores,requisitos,modalidad_compra,pedido_inicial,devoluciones,decision_compra'],
+            'perfil' => ['sometimes', 'array:foto_url,direccion,canton,sector,productos_buscados,tiene_refrigeracion,contacto_nombre,contacto_telefono,contacto_email,canales_contacto,autorizar_contacto,horario_atencion,horario_proveedores,requisitos,modalidad_compra,pedido_inicial,devoluciones,decision_compra'],
             'perfil.foto_url' => ['nullable', 'url:http,https', 'max:2048'],
             'perfil.direccion' => ['nullable', 'string', 'max:255'],
             'perfil.canton' => ['nullable', 'string', 'max:255'],
@@ -39,6 +39,7 @@ class DatosEstablecimiento
             'perfil.canales_contacto' => ['nullable', 'array', 'list', 'max:3'],
             'perfil.canales_contacto.*' => ['required', 'distinct', Rule::in(['telefono', 'whatsapp', 'email'])],
             'perfil.autorizar_contacto' => ['sometimes', 'required', 'boolean'],
+            'perfil.horario_atencion' => ['nullable', 'string', 'max:255'],
             'perfil.horario_proveedores' => ['nullable', 'string', 'max:255'],
             'perfil.requisitos' => ['nullable', 'string', 'max:4000'],
             'perfil.modalidad_compra' => ['nullable', Rule::in(['contado', 'credito', 'consignacion'])],
@@ -73,6 +74,13 @@ class DatosEstablecimiento
         return $this->posiblesDuplicados($datos, $datos['perfil'] ?? []);
     }
 
+    public function duplicadosImportacion(array $datos): array
+    {
+        $perfil = $datos['perfil'] ?? [];
+
+        return $this->posiblesDuplicados($datos, $perfil, paraImportar: true);
+    }
+
     private function persistir(
         array $datos, ?Establecimiento $establecimiento, ?int $responsableId, bool $importacion, ?int $propietario = null
     ): array {
@@ -89,7 +97,7 @@ class DatosEstablecimiento
             }
 
             if ($importacion) {
-                $duplicados = $this->posiblesDuplicados($base, $datos['perfil'] ?? []);
+                $duplicados = $this->duplicadosImportacion($datos);
                 if ($duplicados !== []) {
                     return [null, $duplicados];
                 }
@@ -144,20 +152,33 @@ class DatosEstablecimiento
         }
     }
 
-    private function posiblesDuplicados(array $base, array $perfil): array
+    private function posiblesDuplicados(array $base, array $perfil, bool $paraImportar = false): array
     {
+        $direccion = $perfil['direccion'] ?? null;
+        $telefono = ltrim(preg_replace('/[ ()-]/', '', $perfil['contacto_telefono'] ?? ''), '+');
         $consulta = Establecimiento::query()
-            ->where(fn ($query) => $query
-                ->where('nombre', $base['nombre'])
-                ->when(filled($perfil['direccion'] ?? null), fn ($q) => $q->orWhereHas(
-                    'perfilComercial', fn ($comercial) => $comercial->where('direccion', $perfil['direccion'])
-                ))
-                ->when(filled($perfil['contacto_telefono'] ?? null), fn ($q) => $q->orWhereHas(
-                    'perfilComercial', fn ($comercial) => $comercial->where(
-                        'contacto_telefono', preg_replace('/[ ()-]/', '', $perfil['contacto_telefono'])
-                    )
-                )));
+            ->where(function ($query) use ($base, $direccion, $telefono, $paraImportar) {
+                $query->where(function ($q) use ($base, $direccion, $telefono, $paraImportar) {
+                    $q->where('nombre', $base['nombre']);
+                    if ($paraImportar && filled($direccion)) {
+                        $q->whereHas('perfilComercial', fn ($p) => $p->where('direccion', $direccion));
+                    } elseif ($paraImportar) {
+                        // Las fichas sin dirección aún deben poder reintentarse.
+                        $q->where('tipo', $base['tipo'])->where('parroquia', $base['parroquia'])
+                            ->whereDoesntHave('perfilComercial', fn ($p) => $p->whereNotNull('direccion'));
+                        if ($telefono !== '') {
+                            $q->whereDoesntHave('perfilComercial', fn ($p) => $p->whereNotNull('contacto_telefono'));
+                        }
+                    }
+                });
+                if (! $paraImportar && filled($direccion)) {
+                    $query->orWhereHas('perfilComercial', fn ($p) => $p->where('direccion', $direccion));
+                }
+                if ($telefono !== '') {
+                    $query->orWhereHas('perfilComercial', fn ($p) => $p->whereIn('contacto_telefono', [$telefono, '+'.$telefono]));
+                }
+            });
 
-        return $consulta->limit(10)->pluck('id')->map(fn ($id) => (string) $id)->all();
+        return $consulta->orderBy('id')->limit(10)->pluck('id')->map(fn ($id) => (string) $id)->all();
     }
 }

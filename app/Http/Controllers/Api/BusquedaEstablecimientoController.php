@@ -15,19 +15,22 @@ class BusquedaEstablecimientoController
 {
     public function buscar(Request $request): JsonResponse
     {
+        $publicarInteres = (bool) config('app.publicar_interes_encuesta');
         $filtros = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'canton' => ['nullable', 'string', 'max:100'],
+            'parroquia' => ['nullable', 'string', 'max:255'],
             'sector' => ['nullable', 'string', 'max:100'],
             'tipo' => ['nullable', 'string', 'max:80'],
             'categoria_id' => ['nullable', 'integer', 'min:1'],
             'recepcionProveedores' => ['nullable', Rule::in(FlujoComercial::RECEPCION)],
+            'interes_declarado' => [Rule::prohibitedIf(! $publicarInteres), 'nullable', 'boolean'],
             'latitud' => ['required_with:longitud,distancia_km', 'nullable', 'numeric', 'between:-90,90'],
             'longitud' => ['required_with:latitud,distancia_km', 'nullable', 'numeric', 'between:-180,180'],
             'distancia_km' => ['nullable', 'numeric', 'gt:0', 'max:500'],
         ]);
 
-        $consulta = Establecimiento::query()->orderBy('nombre')->orderBy('id')
+        $consulta = Establecimiento::query()->with('perfilComercial')->orderBy('nombre')->orderBy('id')
             ->when($filtros['q'] ?? null, function ($q, $texto) {
                 $patron = '%'.$texto.'%';
                 $q->where(fn ($query) => $query->whereLike('nombre', $patron)
@@ -36,15 +39,30 @@ class BusquedaEstablecimientoController
                         ->whereLike('direccion', $patron)->orWhereLike('sector', $patron)->orWhereLike('canton', $patron)));
             })
             ->when($filtros['canton'] ?? null, fn ($q, $canton) => $q->whereHas('perfilComercial', fn ($p) => $p->where('canton', $canton)))
+            ->when($filtros['parroquia'] ?? null, fn ($q, $parroquia) => $q->where('parroquia', $parroquia))
             ->when($filtros['sector'] ?? null, fn ($q, $sector) => $q->where(fn ($p) => $p->where('parroquia', $sector)
                 ->orWhereHas('perfilComercial', fn ($perfil) => $perfil->where('sector', $sector))))
             ->when($filtros['tipo'] ?? null, fn ($q, $tipo) => $q->where('tipo', $tipo))
             ->when($filtros['recepcionProveedores'] ?? null, fn ($q, $estado) => $q->where('recepcion_proveedores', $estado))
             ->when($filtros['categoria_id'] ?? null, fn ($q, $id) => $q->whereHas('categorias', fn ($c) => $c->whereKey($id)->where('activa', true)));
 
-        $resultados = $consulta->get()->map(function (Establecimiento $comercio) use ($filtros, $request) {
-            return (new EstablecimientoResource($comercio))->toArray($request)
-                + ['distanciaKm' => $this->distancia($comercio, $filtros)];
+        if (isset($filtros['interes_declarado'])) {
+            $consulta->whereHas('perfilComercial', fn ($p) => $p->where('interes_encuesta', (bool) $filtros['interes_declarado']));
+        }
+
+        $resultados = $consulta->get()->map(function (Establecimiento $comercio) use ($filtros, $publicarInteres, $request) {
+            $perfil = $comercio->perfilComercial;
+            $fila = (new EstablecimientoResource($comercio))->toArray($request) + [
+                'direccion' => $perfil?->direccion,
+                'sector' => $perfil?->sector,
+                'foto_url' => $perfil?->foto_url,
+                'distanciaKm' => $this->distancia($comercio, $filtros),
+            ];
+            if ($publicarInteres) {
+                $fila['interesDeclarado'] = $perfil?->interes_encuesta;
+            }
+
+            return $fila;
         });
 
         if (isset($filtros['distancia_km'])) {

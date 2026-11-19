@@ -69,7 +69,7 @@ class DetectorDuplicados
     public function enBaseDeDatos(array $datos): array
     {
         try {
-            $ids = $this->establecimientos->duplicados($datos);
+            $ids = $this->establecimientos->duplicadosImportacion($datos);
 
             if ($ids === []) {
                 return [];

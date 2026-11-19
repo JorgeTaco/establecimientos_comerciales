@@ -74,6 +74,7 @@ class NormalizadorFilas
             'canton' => $this->opcional($valores, 'perfil.canton') ?: null,
             'sector' => $this->opcional($valores, 'perfil.sector') ?: null,
             'foto_url' => $this->opcional($valores, 'perfil.foto_url') ?: null,
+            'horario_atencion' => $this->opcional($valores, 'perfil.horario_atencion') ?: null,
             'horario_proveedores' => $this->opcional($valores, 'perfil.horario_proveedores') ?: null,
             'requisitos' => $this->opcional($valores, 'perfil.requisitos') ?: null,
             'devoluciones' => $this->opcional($valores, 'perfil.devoluciones') ?: null,
@@ -135,6 +136,14 @@ class NormalizadorFilas
             }
             if ($resueltas['ids'] !== []) {
                 $datos['categorias'] = $resueltas['ids'];
+            }
+        }
+
+        if ($this->booleano($this->valor($valores, 'comercializa_lacteos')) !== false) {
+            $productosVendidos = $this->valor($valores, 'productos_lacteos');
+            $inferidas = $this->categorias->resolver(CategoriasLacteas::desdeProductos($productosVendidos));
+            if ($inferidas['ids'] !== []) {
+                $datos['categorias'] = array_values(array_unique([...($datos['categorias'] ?? []), ...$inferidas['ids']]));
             }
         }
 

@@ -16,6 +16,8 @@ La [guía de colaboración](CONTRIBUTING.md) indica qué rama abrir, quién revi
 
 La primera entrega será un listado móvil conectado a la API de Laravel, con comercios de prueba y su estado de recepción de propuestas. Michelle puede trabajar con el [JSON ficticio](datos/ejemplos/establecimientos.json) mientras Brandon prepara el formato de importación. Laravel sirve el [contrato del listado](docs/contrato-establecimientos.md) desde MySQL.
 
+La [guía de integración del piloto](docs/integracion-piloto.md) reúne las rutas, los datos de prueba y los pasos de Michelle y Brandon para trabajar con el mismo backend local.
+
 La prueba de aceptación del piloto será completar desde el celular este recorrido de emprendedor: registrar un producto, encontrar un comercio compatible, consultar su ficha, contactarlo y guardar el resultado.
 
 ## Levantar el proyecto en local
@@ -39,7 +41,7 @@ Se necesita PHP 8.3 o superior con las extensiones de Laravel y `pdo_mysql`, Com
    php artisan serve
    ```
 
-   Abre `http://127.0.0.1:8000`. El listado se consulta en `GET /api/establecimientos` y devuelve una lista vacía hasta que se carguen comercios.
+   Abre `http://127.0.0.1:8000/establecimientos`. Ejecuta `php artisan db:seed` en tu base de desarrollo para ver los comercios ficticios o `php artisan db:seed --class=CategoriaSeeder` para instalar solo el catálogo.
 
 4. Para ejecutar `php artisan test`, crea también la base MySQL separada `establecimientos_comerciales_test` y otorga al usuario de pruebas permisos para ejecutar migraciones sobre ella. Puedes guardar credenciales específicas de pruebas en `.env.testing`.
 
