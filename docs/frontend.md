@@ -13,6 +13,7 @@ Blade sirve las pantallas y el JavaScript consume la [API de Laravel](backend.md
 | `/oportunidades` | Emprendedor | Seguimiento, notas privadas, próxima gestión, condiciones y propuestas enviadas. |
 | `/comercio/establecimientos`, `/propuestas-recibidas` | Comercio | Fichas propias y respuesta a propuestas de los comercios a cargo. |
 | `/admin/indicadores` | Administrador | Indicadores, categorías, usuarios, reportes e importación. |
+| `/admin/encuestas` | Administrador | Filas originales de las cargas archivadas, estado de importación y acceso a las fichas guardadas. |
 
 La barra principal muestra el directorio, la evaluación y las secciones disponibles según el rol. En las demás pantallas, **Volver** lleva a la sección anterior de la ruta, incluso al abrir un enlace directo. Al regresar desde una ficha, la búsqueda y los filtros públicos se conservan si la ficha se abrió desde el directorio.
 

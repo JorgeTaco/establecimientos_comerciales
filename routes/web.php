@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\SesionController;
 use App\Http\Controllers\Web\ComercioController;
+use App\Http\Controllers\Web\EncuestaController;
 use App\Http\Controllers\Web\FichaController;
 use App\Http\Controllers\Web\OportunidadController;
 use App\Http\Controllers\Web\ProductoController;
@@ -59,8 +60,13 @@ Route::middleware(['auth', CuentaActiva::class.':comercio'])->group(function () 
     Route::view('/comercio/establecimientos', 'comercio.establecimientos')->name('comercio.establecimientos');
 });
 
-Route::view('/admin/indicadores', 'admin.indicadores')
-    ->middleware(['auth', CuentaActiva::class.':administrador'])->name('admin.indicadores');
+Route::prefix('admin')->name('admin.')->middleware(['auth', CuentaActiva::class.':administrador'])->group(function () {
+    Route::view('/indicadores', 'admin.indicadores')->name('indicadores');
+    Route::get('/encuestas', [EncuestaController::class, 'index'])->name('encuestas.index');
+    Route::get('/encuestas/{encuesta}', [EncuestaController::class, 'show'])->whereNumber('encuesta')->name('encuestas.show');
+    Route::get('/encuestas/{encuesta}/filas/{fila}', [EncuestaController::class, 'fila'])
+        ->whereNumber(['encuesta', 'fila'])->scopeBindings()->name('encuestas.filas.show');
+});
 
 Route::middleware(['auth', CuentaActiva::class.':comercio,administrador'])->group(function () {
     Route::get('/comercio/establecimientos/crear', [ComercioController::class, 'create'])->name('comercio.crear');
