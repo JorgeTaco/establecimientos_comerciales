@@ -55,6 +55,15 @@
     border-color: var(--verde);
 }
 
+.navegacion nav .navegacion__entrada {
+    background: var(--verde);
+    color: var(--sobre-verde);
+}
+
+.navegacion nav .navegacion__entrada:hover {
+    background: var(--verde-oscuro);
+}
+
 .navegacion a:focus-visible,
 .navegacion__sesion:focus-visible,
 .ruta-navegacion a:focus-visible {
