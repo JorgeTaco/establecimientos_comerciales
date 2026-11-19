@@ -21,7 +21,7 @@ La [guía de colaboración](CONTRIBUTING.md) indica qué rama abrir, quién revi
 - **Comercio** puede registrar o actualizar su ficha y responder las propuestas que recibe.
 - **Administrador** puede revisar indicadores, gestionar categorías y usuarios, resolver reportes y simular o importar el Excel de la encuesta.
 
-La [vista previa pública](https://jorgetaco.github.io/establecimientos_comerciales/) permite buscar y filtrar fichas ficticias en GitHub Pages. Para probar inicio de sesión y cambios con MySQL, abre **`/evaluacion`** en la instalación del equipo o en una instalación local.
+La [página pública](https://jorgetaco.github.io/establecimientos_comerciales/) permite buscar fichas ficticias y enlaza **Iniciar sesión** con la instalación de evaluación de Laravel y MySQL.
 
 ## Levantar la aplicación
 
@@ -60,6 +60,8 @@ Abre [el directorio local](http://127.0.0.1:8000/establecimientos) para buscar f
 ### Entrega al docente
 
 Para acceso desde fuera de la red local, instala Laravel en un servidor con PHP y MySQL. Configura HTTPS y dirige la raíz del sitio a `public/`. Ajusta `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` con el dominio final, `SESSION_DRIVER=database` y `SESSION_SECURE_COOKIE=true`. Conserva la misma `APP_KEY` al actualizar y usa `php artisan migrate --force` en los despliegues.
+
+Si el servidor termina HTTPS en un proxy inverso, configura `APP_TRUSTED_PROXIES` con las IP del proxy separadas por comas. La entrega actual usa un enlace temporal de Cloudflare Tunnel hacia una instalación de evaluación con datos ficticios. El enlace requiere que el equipo, Laravel, MySQL y el túnel sigan activos. Si cambia el dominio del túnel, actualiza los dos enlaces de evaluación en `index.html`.
 
 Entrega al docente la URL HTTPS que termina en `/evaluacion` y las credenciales por un canal privado. El [plan de acceso](docs/plan-inicio-sesion.md) incluye el recorrido de aceptación. Para preparar cuentas de comercio o administración, usa `usuario:crear` con `--rol=comercio` o `--rol=administrador`.
 

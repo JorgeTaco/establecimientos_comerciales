@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $proxies = array_values(array_filter(array_map('trim', explode(',', (string) env('APP_TRUSTED_PROXIES', '')))));
+        if ($proxies !== []) {
+            $middleware->trustProxies(at: $proxies, headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
+        }
+
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : route('login'));
         $middleware->redirectUsersTo(fn () => route('establecimientos.index'));
     })
