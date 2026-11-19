@@ -63,7 +63,17 @@ Para acceso desde fuera de la red local, instala Laravel en un servidor con PHP 
 
 Si el servidor termina HTTPS en un proxy inverso, configura `APP_TRUSTED_PROXIES` con las IP del proxy separadas por comas. La entrega actual usa un enlace temporal de Cloudflare Tunnel hacia una instalación de evaluación con datos ficticios. El enlace requiere que el equipo, Laravel, MySQL y el túnel sigan activos. Si cambia el dominio del túnel, actualiza los dos enlaces de evaluación en `index.html`.
 
-Entrega al docente la URL HTTPS que termina en `/evaluacion` y las credenciales por un canal privado. El [plan de acceso](docs/plan-inicio-sesion.md) incluye el recorrido de aceptación. Para preparar cuentas de comercio o administración, usa `usuario:crear` con `--rol=comercio` o `--rol=administrador`.
+#### Cuentas para la evaluación en línea
+
+Entra desde [GitHub Pages](https://jorgetaco.github.io/establecimientos_comerciales/) con **Iniciar sesión** o usa [el enlace directo de evaluación](https://scroll-north-newsletters-publisher.trycloudflare.com/evaluacion).
+
+| Rol | Correo | Contraseña | Qué probar |
+| --- | --- | --- | --- |
+| Emprendedor | `emprendedor-demo@ejemplo.test` | `V5hvO-sDQlkwcfO6ABNrnhOw` | Abre **Mis productos** y **Mis oportunidades**. |
+| Comercio | `comercio-demo@ejemplo.test` | `Wf2MYojESle6Hbs8xyNPzq0c` | Abre **Mis establecimientos** para ver Tienda Demo Amanecer y **Propuestas recibidas**. |
+| Administrador | `administrador-evaluacion@ejemplo.test` | El equipo la entrega al docente en privado. | Abre **Indicadores** para revisar usuarios, categorías, reportes e importación. |
+
+Estas cuentas funcionan en la instalación temporal con datos ficticios. Para la cuenta personal del docente, el equipo comparte la contraseña en privado. El [plan de acceso](docs/plan-inicio-sesion.md) incluye el recorrido de aceptación.
 
 ### Verificar cambios
 
@@ -81,4 +91,4 @@ Al desarrollar el mapa, habilita **Maps JavaScript API** en el proyecto de Googl
 
 El listado presenta las coordenadas y carga Google Maps al pulsar **Mostrar mapa**. Los filtros reutilizan el mapa de la página. Para probar el listado y la búsqueda, basta con consultar la API de Laravel.
 
-El Excel original, las credenciales y los datos reales se guardan fuera de Git.
+El Excel original, los datos reales y las credenciales privadas se guardan fuera de Git.
