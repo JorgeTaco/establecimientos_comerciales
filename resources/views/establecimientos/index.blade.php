@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="{{ asset('css/establecimientos.css') }}">
     <link rel="stylesheet" href="{{ asset('css/navegacion.css') }}">
 </head>
-<body>
+<body class="directorio">
     <header class="cabecera cabecera--directorio">
         <div class="barra">
             <x-marca />
