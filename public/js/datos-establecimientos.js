@@ -96,6 +96,10 @@
         return valor.charAt(0).toUpperCase() + valor.slice(1);
     }
 
+    function etiquetaTipo(tipo) {
+        return Object.hasOwn(TIPOS, tipo) ? TIPOS[tipo] : capitalizar(tipo) || 'Sin tipo';
+    }
+
     function lista(valor) {
         return Array.isArray(valor) ? valor : [];
     }
@@ -136,7 +140,7 @@
             id: texto(registro.id),
             nombre: texto(registro.nombre) || 'Comercio sin nombre',
             tipo: tipo,
-            tipoEtiqueta: TIPOS[tipo] || capitalizar(tipo) || 'Sin tipo',
+            tipoEtiqueta: etiquetaTipo(tipo),
             parroquia: texto(registro.parroquia),
             sector: texto(registro.sector),
             direccion: texto(registro.direccion),
@@ -293,11 +297,16 @@
     }
 
     async function buscar(apiUrl, filtros) {
-        var cuerpo = await pedir(apiUrl + queryString(filtros));
-        if (!cuerpo || !Array.isArray(cuerpo.establecimientos)) {
+        var cuerpo = await pedir(apiUrl + queryString({ ...filtros, facetas: 1 }));
+        if (!cuerpo || !Array.isArray(cuerpo.establecimientos) ||
+            !cuerpo.facetas || !Number.isInteger(cuerpo.totalDirectorio)) {
             throw new Error('El directorio recibió una respuesta inválida.');
         }
-        return cuerpo.establecimientos.map(normalizar);
+        return {
+            establecimientos: cuerpo.establecimientos.map(normalizar),
+            facetas: cuerpo.facetas,
+            totalDirectorio: cuerpo.totalDirectorio
+        };
     }
 
     async function cargarFicha(apiBaseUrl, registro) {
@@ -313,6 +322,7 @@
         cargar: cargar,
         buscar: buscar,
         cargarFicha: cargarFicha,
+        etiquetaTipo: etiquetaTipo,
         ESTADOS: ESTADOS,
         TIPOS: TIPOS,
         MODALIDADES: MODALIDADES,

@@ -45,13 +45,13 @@
             <div class="chips" role="group" aria-label="Filtrar por recepción de propuestas">
                 <button type="button" class="chip chip--estado is-activo" data-estado="">Todos los estados</button>
                 <button type="button" class="chip chip--estado chip--positivo" data-estado="recibe_propuestas">
-                    <span class="chip__punto" aria-hidden="true"></span> Recibe propuestas
+                    <span class="chip__punto" aria-hidden="true"></span> <span>Recibe propuestas<span data-cantidad></span></span>
                 </button>
                 <button type="button" class="chip chip--estado chip--pendiente" data-estado="por_confirmar">
-                    <span class="chip__punto" aria-hidden="true"></span> Por confirmar
+                    <span class="chip__punto" aria-hidden="true"></span> <span>Por confirmar<span data-cantidad></span></span>
                 </button>
                 <button type="button" class="chip chip--estado chip--negativo" data-estado="no_recibe_por_ahora">
-                    <span class="chip__punto" aria-hidden="true"></span> No recibe por ahora
+                    <span class="chip__punto" aria-hidden="true"></span> <span>No recibe por ahora<span data-cantidad></span></span>
                 </button>
             </div>
 
@@ -158,9 +158,10 @@
             El directorio aún no tiene comercios registrados.
         </p>
 
-        <p class="mensaje" id="estado-vacio" role="status" hidden>
-            Ningún comercio coincide con la búsqueda. Prueba con otros filtros.
-        </p>
+        <div class="mensaje" id="estado-vacio" hidden>
+            <p role="status">Ningún comercio coincide con la búsqueda.</p>
+            <button type="button" class="boton boton--secundario" id="quitar-filtros" hidden>Quitar filtros</button>
+        </div>
 
         <div id="vista-lista" role="tabpanel" aria-labelledby="boton-lista">
             <ul class="listado" id="listado"></ul>
@@ -233,7 +234,6 @@
             api: @json(url('/api/establecimientos/buscar')),
             apiBase: @json(url('/api/establecimientos')),
             fichas: @json(route('establecimientos.index')),
-            categorias: @json(url('/api/categorias')),
             googleMapsKey: @json(config('services.google_maps.key')),
             googleMapsMapId: @json(config('services.google_maps.map_id')),
             centro: { lat: -0.9333, lng: -78.6167 }

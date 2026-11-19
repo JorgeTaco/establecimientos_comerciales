@@ -55,7 +55,7 @@ Instala PHP **8.3 o superior**, Composer y MySQL. PHP necesita las [extensiones 
 
 5. Abre [la entrada de evaluación local](http://127.0.0.1:8000/evaluacion) y comprueba el acceso en una ventana privada. En el celular conectado a la misma red, ejecuta `php artisan serve --host=0.0.0.0 --port=8000`, ajusta `APP_URL=http://IP-DEL-EQUIPO:8000` y abre `http://IP-DEL-EQUIPO:8000/evaluacion`. Si el celular no conecta, verifica la IP vigente, el puerto 8000 en el cortafuegos y que el Wi-Fi permita comunicación entre dispositivos.
 
-Abre [el directorio local](http://127.0.0.1:8000/establecimientos) para buscar fichas y cambiar entre lista y mapa. La ruta `/api/establecimientos/buscar` entrega el JSON que consume la interfaz.
+Abre [el directorio local](http://127.0.0.1:8000/establecimientos) para buscar fichas, ver cuántos comercios coinciden con cada filtro y cambiar entre lista y mapa. La ruta `/api/establecimientos/buscar` entrega el JSON que consume la interfaz.
 
 ### Entrega al docente
 

@@ -18,6 +18,8 @@ La barra principal muestra el directorio, la evaluación y las secciones disponi
 
 El directorio distingue una base sin comercios, una búsqueda sin coincidencias y un fallo de carga. **Reintentar** consulta la API con los filtros actuales. La vista previa de GitHub Pages utiliza sus propios datos ficticios. Para probar el flujo completo con MySQL, carga los comercios de ejemplo con `php artisan db:seed`.
 
+Los filtros muestran cuántos resultados quedarán con cada opción. Se actualizan según el texto y los demás filtros activos. Una selección que llegue a cero sigue disponible para quitarla. Cuando no hay coincidencias, **Quitar filtros** limpia las selecciones y conserva el texto de búsqueda.
+
 La búsqueda, los filtros generales, el orden y la vista seleccionada se conservan en la URL. La ubicación de origen de una búsqueda por radio permanece en el historial de la pestaña. En la red local por HTTP se admiten coordenadas manuales. **Usar mi ubicación** requiere permiso y un origen seguro.
 
 Desde **Mapa** puedes abrir una ficha o consultar **Cómo llegar** para cada comercio con coordenadas. **Mostrar mapa** carga Google Maps bajo demanda. También puedes cambiar entre **Lista** y **Mapa** con las flechas del teclado.

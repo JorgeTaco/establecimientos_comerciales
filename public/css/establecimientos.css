@@ -1325,7 +1325,8 @@ a.ficha__valor:hover {
     margin-top: 0.25rem;
 }
 
-#estado-error .boton {
+#estado-error .boton,
+#estado-vacio .boton {
     margin-top: 0.7rem;
 }
 
