@@ -48,6 +48,8 @@ Cada cambio sale del último `main`. Se pueden usar `jorge/acceso-web` para el c
 
 ## Cuenta del docente
 
+La entrada de evaluación está en `/evaluacion`. Después de iniciar sesión desde esa página, el docente ve el recorrido y puede registrar su primer producto. La [guía de instalación](../README.md#levantar-la-aplicación) explica cómo habilitar la instalación para un celular y preparar la URL HTTPS de entrega.
+
 La cuenta principal será de **emprendedor**, que es el rol del recorrido de aceptación. Se creará en la base de la instalación de evaluación con datos ficticios y una contraseña única. Si el docente solicita probar administración o comercio, se prepara un acceso separado para ese rol.
 
 1. **El comando de aprovisionamiento de Brandon y Jorge** recibe el correo y solicita la contraseña dos veces mediante un prompt oculto. El rol predeterminado es emprendedor. La creación rechaza correos existentes. Si hace falta cambiar una contraseña, `--actualizar-clave` actualiza ese campo y conserva el rol y la suspensión.
@@ -66,13 +68,13 @@ Sustituye el correo de ejemplo por el acordado para la entrega y ejecuta la segu
 
 | Caso | Resultado esperado |
 | --- | --- |
-| Entrar con la cuenta ya creada | El docente entra sin pasar por registro y el listado muestra su sesión activa. |
+| Entrar con la cuenta ya creada | El docente entra sin pasar por registro y la página de evaluación permite registrar un producto. |
 | Correo o contraseña incorrectos | Aparece el mensaje de credenciales inválidas y la sesión permanece cerrada. |
 | Recargar y navegar | Se conserva la sesión y el rol correcto. |
 | Salir y volver a una página privada | Se solicita iniciar sesión y la API anterior devuelve `401`. |
 | Solicitud de escritura con CSRF ausente o anterior | Laravel devuelve `419` y la interfaz permite recuperar el token. |
 | Cuenta de emprendedor pide una acción de administración, o una cuenta está suspendida | Laravel rechaza la acción. Un usuario tampoco puede consultar productos, notas o propuestas ajenos. |
 | Registro de prueba | El correo es único, la contraseña tiene al menos 12 caracteres y hasta 72 bytes, y el formulario solo permite los roles de emprendedor y comercio. |
-| Prueba completa en celular | Con la cuenta del docente, abrir la pantalla de entrada, registrar un producto, encontrar un comercio, consultar su ficha y guardar el resultado de contacto en cuanto estén disponibles las pantallas del recorrido. |
+| Prueba completa en celular | Con la cuenta del docente, abrir la pantalla de entrada, registrar un producto, encontrar un comercio, consultar su ficha y guardar el resultado de contacto. |
 
 La tarea de inicio de sesión queda terminada cuando la entrada y la salida funcionan desde un teléfono, pasan las pruebas con MySQL y la cuenta del docente ha sido verificada en la URL de evaluación.

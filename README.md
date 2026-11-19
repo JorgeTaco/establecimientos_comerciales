@@ -14,40 +14,62 @@ El proyecto usa **Laravel 13** con **Blade** para la interfaz, **MySQL** para lo
 
 La [guía de colaboración](CONTRIBUTING.md) indica qué rama abrir, quién revisa cada avance y cómo coordinar cambios compartidos. Los [contratos del backend](docs/backend.md) documentan las rutas para la interfaz y el formato que usará el importador de Excel. Los contratos y las migraciones se amplían de forma aditiva.
 
-La primera entrega será un listado móvil conectado a la API de Laravel, con comercios de prueba y su estado de recepción de propuestas. Michelle puede trabajar con el [JSON ficticio](datos/ejemplos/establecimientos.json) mientras Brandon prepara el formato de importación. Laravel sirve el [contrato del listado](docs/contrato-establecimientos.md) desde MySQL.
+## Qué se puede probar
 
-La [guía de integración del piloto](docs/integracion-piloto.md) reúne las rutas, los datos de prueba y los pasos de Michelle y Brandon para trabajar con el mismo backend local.
+- **Directorio público** con búsqueda por nombre, dirección, tipo, parroquia, categoría, estado de recepción y radio. La ficha muestra condiciones y contacto autorizado. **Mostrar mapa** carga Google Maps cuando se solicita.
+- **Emprendedor** puede crear y archivar productos, buscar comercios compatibles, compartir un catálogo revocable, enviar propuestas y actualizar sus oportunidades.
+- **Comercio** puede registrar o actualizar su ficha y responder las propuestas que recibe.
+- **Administrador** puede revisar indicadores, gestionar categorías y usuarios, resolver reportes y simular o importar el Excel de la encuesta.
 
-La prueba de aceptación del piloto será completar desde el celular este recorrido de emprendedor: registrar un producto, encontrar un comercio compatible, consultar su ficha, contactarlo y guardar el resultado.
+La [vista previa pública](https://jorgetaco.github.io/establecimientos_comerciales/) muestra fichas ficticias en GitHub Pages. Para probar inicio de sesión y cambios con MySQL, abre **`/evaluacion`** en la instalación del equipo o en una instalación local.
 
-## Inicio de sesión y cuenta del docente
+## Levantar la aplicación
 
-El [plan de inicio de sesión](docs/plan-inicio-sesion.md) define qué prepara Jorge en Laravel, qué conecta Michelle en la interfaz y cómo valida Brandon la sesión y la cuenta de evaluación con MySQL. También describe el orden de integración y cómo entregar al docente un acceso ya probado.
+Instala PHP **8.3 o superior**, Composer y MySQL. PHP necesita las [extensiones de Laravel](https://laravel.com/docs/13.x/deployment#server-requirements), además de `pdo_mysql` y `zip`. La aplicación usa Blade y sirve los estilos y el JavaScript desde `public/`.
 
-## Levantar el proyecto en local
-
-Se necesita PHP 8.3 o superior con las extensiones de Laravel y `pdo_mysql`, Composer y MySQL. La base actual usa Blade y sirve los archivos estáticos desde `public/`. [Requisitos de Laravel 13](https://laravel.com/framework/docs/deployment)
-
-1. Desde la raíz del repositorio, instala las dependencias y prepara la configuración local.
+1. Clona el proyecto e inicializa su configuración en la primera instalación.
 
    ```bash
+   git clone https://github.com/JorgeTaco/establecimientos_comerciales.git
+   cd establecimientos_comerciales
    composer install
    cp .env.example .env
    php artisan key:generate
    ```
 
-2. Crea una base MySQL llamada `establecimientos_comerciales` y actualiza en `.env` los valores `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD` según tu instalación. Usa un usuario con permisos sobre esa base. `DB_CONNECTION` ya está configurado como `mysql`.
-3. Ejecuta las migraciones iniciales y levanta el servidor.
+2. Crea la base MySQL `establecimientos_comerciales` con codificación `utf8mb4` y un usuario con permisos sobre esa base. Ajusta `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD` en `.env`.
+3. Migra, carga los comercios ficticios y enlaza las fotos. Para una instalación destinada a la encuesta real, ejecuta `php artisan db:seed --class=CategoriaSeeder` en lugar de `php artisan db:seed`.
 
    ```bash
    php artisan migrate
+   php artisan db:seed
    php artisan storage:link
+   ```
+
+4. Crea la cuenta del docente. El comando pide y confirma una contraseña de al menos 12 caracteres mediante una entrada oculta. Cambia el correo de ejemplo si la entrega usa otro.
+
+   ```bash
+   php artisan usuario:crear docente@ejemplo.test --nombre="Docente de evaluación" --rol=emprendedor
    php artisan serve
    ```
 
-   Abre `http://127.0.0.1:8000/establecimientos`. Ejecuta `php artisan db:seed` en tu base de desarrollo para ver los comercios ficticios o `php artisan db:seed --class=CategoriaSeeder` para instalar solo el catálogo.
+5. Abre [la entrada de evaluación local](http://127.0.0.1:8000/evaluacion) y comprueba el acceso en una ventana privada. En el celular conectado a la misma red, ejecuta `php artisan serve --host=0.0.0.0 --port=8000`, ajusta `APP_URL=http://IP-DEL-EQUIPO:8000` y abre `http://IP-DEL-EQUIPO:8000/evaluacion`. Si el celular no conecta, verifica la IP vigente, el puerto 8000 en el cortafuegos y que el Wi-Fi permita comunicación entre dispositivos.
 
-4. Para ejecutar `php artisan test`, crea también la base MySQL separada `establecimientos_comerciales_test` y otorga al usuario de pruebas permisos para ejecutar migraciones sobre ella. Puedes guardar credenciales específicas de pruebas en `.env.testing`.
+### Entrega al docente
+
+Para acceso desde fuera de la red local, instala Laravel en un servidor con PHP y MySQL. Configura HTTPS y dirige la raíz del sitio a `public/`. Ajusta `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` con el dominio final, `SESSION_DRIVER=database` y `SESSION_SECURE_COOKIE=true`. Conserva la misma `APP_KEY` al actualizar y usa `php artisan migrate --force` en los despliegues.
+
+Entrega al docente la URL HTTPS que termina en `/evaluacion` y las credenciales por un canal privado. El [plan de acceso](docs/plan-inicio-sesion.md) incluye el recorrido de aceptación. Para preparar cuentas de comercio o administración, usa `usuario:crear` con `--rol=comercio` o `--rol=administrador`.
+
+### Verificar cambios
+
+Crea una base MySQL separada llamada `establecimientos_comerciales_test` con permisos para migrar y ejecutar las pruebas. Puedes usar `.env.testing` para su configuración.
+
+```bash
+php artisan test
+```
+
+Consulta las [pantallas y sus rutas](docs/frontend.md), el [contrato de la API](docs/backend.md) y la [guía de importación](datos/README.md).
 
 ### Google Maps
 
@@ -55,4 +77,4 @@ Al desarrollar el mapa, habilita **Maps JavaScript API** en el proyecto de Googl
 
 El listado presenta las coordenadas y carga Google Maps al pulsar **Mostrar mapa**. Los filtros reutilizan el mapa de la página. Para probar el listado y la búsqueda, basta con consultar la API de Laravel.
 
-El backend incluye sesión y roles, fichas comerciales, catálogo, compatibilidad, oportunidades, propuestas y administración. El Excel original, las credenciales y los datos reales se guardan fuera de Git.
+El Excel original, las credenciales y los datos reales se guardan fuera de Git.

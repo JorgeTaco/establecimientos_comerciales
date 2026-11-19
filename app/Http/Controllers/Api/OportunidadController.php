@@ -14,8 +14,19 @@ class OportunidadController
     public function index(Request $request): JsonResponse
     {
         return response()->json([
-            'oportunidades' => $request->user()->oportunidades()->latest('updated_at')->latest('id')->get(),
+            'oportunidades' => $request->user()->oportunidades()
+                ->with('establecimiento:id,nombre,parroquia')->latest('updated_at')->latest('id')->get(),
         ]);
+    }
+
+    public function show(Request $request, Oportunidad $oportunidad): JsonResponse
+    {
+        abort_unless((int) $oportunidad->user_id === (int) $request->user()->id, 404);
+
+        return response()->json(['oportunidad' => $oportunidad->load([
+            'establecimiento:id,nombre,parroquia',
+            'propuestas' => fn ($propuestas) => $propuestas->latest('id'),
+        ])]);
     }
 
     public function store(Request $request): JsonResponse

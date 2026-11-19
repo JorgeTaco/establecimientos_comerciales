@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CatalogoController;
 use App\Http\Controllers\Api\EstablecimientoController;
 use App\Http\Controllers\Api\FichaEstablecimientoController;
 use App\Http\Controllers\Api\FotoController;
+use App\Http\Controllers\Api\ImportarArchivoController;
 use App\Http\Controllers\Api\OportunidadController;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\PropuestaController;
@@ -34,13 +35,15 @@ Route::middleware('web')->group(function () {
     });
 
     Route::middleware(['auth', CuentaActiva::class.':emprendedor'])->group(function () {
-        Route::apiResource('productos', ProductoController::class)->parameters(['productos' => 'producto']);
+        Route::apiResource('productos', ProductoController::class)
+            ->parameters(['productos' => 'producto'])->names('api.productos');
         Route::get('/productos/{producto}/establecimientos-compatibles', [BusquedaEstablecimientoController::class, 'compatibles'])->whereNumber('producto');
         Route::get('/productos/{producto}/ficha.pdf', [CatalogoController::class, 'pdf'])->middleware('throttle:10,1')->whereNumber('producto');
         Route::post('/catalogo/compartir', [CatalogoController::class, 'compartir']);
         Route::delete('/catalogo/compartir', [CatalogoController::class, 'revocar']);
         Route::get('/oportunidades', [OportunidadController::class, 'index']);
         Route::post('/oportunidades', [OportunidadController::class, 'store']);
+        Route::get('/oportunidades/{oportunidad}', [OportunidadController::class, 'show'])->whereNumber('oportunidad');
         Route::patch('/oportunidades/{oportunidad}', [OportunidadController::class, 'update'])->whereNumber('oportunidad');
         Route::get('/oportunidades/{oportunidad}/propuestas', [OportunidadController::class, 'propuestas'])->whereNumber('oportunidad');
         Route::post('/establecimientos/{establecimiento}/propuestas', [PropuestaController::class, 'store'])->whereNumber('establecimiento');
@@ -55,6 +58,7 @@ Route::middleware('web')->group(function () {
 
     Route::middleware(['auth', CuentaActiva::class.':comercio'])->group(function () {
         Route::get('/propuestas-recibidas', [PropuestaController::class, 'recibidas']);
+        Route::get('/propuestas-recibidas/{propuesta}', [PropuestaController::class, 'recibida'])->whereNumber('propuesta');
         Route::patch('/propuestas-recibidas/{propuesta}/respuesta', [PropuestaController::class, 'responder'])->whereNumber('propuesta');
     });
 
@@ -68,6 +72,7 @@ Route::middleware('web')->group(function () {
         Route::patch('/reportes/{reporte}', [AdministracionController::class, 'resolver'])->whereNumber('reporte');
         Route::get('/indicadores', [AdministracionController::class, 'indicadores']);
         Route::post('/establecimientos/importar', [AdministracionController::class, 'importacion'])->middleware('throttle:10,1');
+        Route::post('/establecimientos/importar-archivo', ImportarArchivoController::class)->middleware('throttle:5,1');
         Route::post('/establecimientos/duplicados', [FichaEstablecimientoController::class, 'duplicados'])->middleware('throttle:30,1');
         Route::post('/establecimientos/{establecimiento}/verificar', [AdministracionController::class, 'verificar'])->whereNumber('establecimiento');
         Route::patch('/establecimientos/{establecimiento}/responsable', [AdministracionController::class, 'asignar'])->whereNumber('establecimiento');

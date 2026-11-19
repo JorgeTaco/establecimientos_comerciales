@@ -33,7 +33,7 @@ class SesionController
         ])->header('Cache-Control', 'private, no-store');
     }
 
-    public function registrar(Request $request): JsonResponse
+    public function registrar(Request $request): JsonResponse|RedirectResponse
     {
         abort_if($request->user() !== null, 409, 'Ya hay una sesión iniciada.');
         $datos = $request->validate([
@@ -54,6 +54,10 @@ class SesionController
         Auth::login($usuario);
         $request->session()->regenerate();
 
+        if ($request->routeIs('registro.store')) {
+            return to_route('establecimientos.index');
+        }
+
         return $this->usuario($request, 201);
     }
 
@@ -72,7 +76,7 @@ class SesionController
         $request->session()->regenerate();
 
         if ($request->routeIs('login.store')) {
-            return to_route('establecimientos.index');
+            return to_route($request->boolean('evaluacion') ? 'evaluacion' : 'establecimientos.index');
         }
 
         return $this->usuario($request);
