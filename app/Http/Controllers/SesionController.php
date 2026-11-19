@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Closure;
+use App\Rules\LimitePassword;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +39,7 @@ class SesionController
         $datos = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'confirmed', Password::min(12), $this->limitePassword(...)],
+            'password' => ['required', 'string', 'confirmed', Password::min(12), new LimitePassword],
             'rol' => ['required', Rule::in(self::ROLES_REGISTRO)],
         ]);
 
@@ -62,7 +62,7 @@ class SesionController
         abort_if($request->user() !== null, 409, 'Ya hay una sesión iniciada.');
         $credenciales = $request->validate([
             'email' => ['required', 'email', 'max:255'],
-            'password' => ['required', 'string', $this->limitePassword(...)],
+            'password' => ['required', 'string', new LimitePassword],
         ]);
 
         if (! Auth::attempt($credenciales + ['suspendido_en' => null])) {
@@ -102,12 +102,5 @@ class SesionController
             'usuario' => $request->user()?->only(['id', 'name', 'email', 'rol']),
             'csrf_token' => $request->session()->token(),
         ];
-    }
-
-    private function limitePassword(string $atributo, mixed $valor, Closure $error): void
-    {
-        if (is_string($valor) && (strlen($valor) > 72 || str_contains($valor, "\0"))) {
-            $error('La contraseña debe tener como máximo 72 bytes y no puede contener bytes nulos.');
-        }
     }
 }

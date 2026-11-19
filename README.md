@@ -53,4 +53,6 @@ Se necesita PHP 8.3 o superior con las extensiones de Laravel y `pdo_mysql`, Com
 
 Al desarrollar el mapa, habilita **Maps JavaScript API** en el proyecto de Google Cloud y coloca en el `.env` local la clave `GOOGLE_MAPS_API_KEY` y el identificador `GOOGLE_MAPS_MAP_ID` para los marcadores avanzados. Restringe la clave a Maps JavaScript API y a los sitios web autorizados, incluido el entorno local que utilice el equipo. La configuración está disponible para Blade mediante `config('services.google_maps')`. [Configuración de Maps JavaScript API](https://developers.google.com/maps/documentation/javascript/get-api-key) · [Marcadores avanzados](https://developers.google.com/maps/documentation/javascript/advanced-markers/start)
 
+El listado presenta las coordenadas y carga Google Maps al pulsar **Mostrar mapa**. Los filtros reutilizan el mapa de la página. Para probar el listado y la búsqueda, basta con consultar la API de Laravel.
+
 El backend incluye sesión y roles, fichas comerciales, catálogo, compatibilidad, oportunidades, propuestas y administración. El Excel original, las credenciales y los datos reales se guardan fuera de Git.

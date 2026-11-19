@@ -12,7 +12,7 @@ php artisan db:seed
 php artisan serve
 ```
 
-`db:seed` carga el catálogo y tres comercios ficticios. Para una base destinada a importar la encuesta, ejecuten solo `php artisan db:seed --class=CategoriaSeeder`. El catálogo incluye Lácteos, Leche, Queso, Yogurt y Mantequilla. Si necesitan probar administración, registren una cuenta local y promuévanla con `php artisan usuario:administrador admin@example.test`.
+`db:seed` carga el catálogo y tres comercios ficticios. Para una base destinada a importar la encuesta, ejecuten solo `php artisan db:seed --class=CategoriaSeeder`. El catálogo incluye Lácteos, Leche, Queso, Yogurt y Mantequilla. Para crear cuentas de prueba, ejecuten `php artisan usuario:crear correo@ejemplo.test` en una terminal interactiva. El rol predeterminado es emprendedor y `--rol` permite elegir comercio o administrador para una cuenta nueva. La contraseña se introduce de forma oculta.
 
 ## Michelle: listado, mapa y flujos con sesión
 
@@ -38,7 +38,7 @@ Para probar el interés declarado con datos ficticios, configura `PUBLICAR_INTER
 
 1. En el proyecto de Google Cloud de la entidad, habilitar Maps JavaScript API y crear una clave de navegador restringida a esa API y a los sitios autorizados. Incluir `http://127.0.0.1:8000/*`, `http://localhost:8000/*` o el dominio HTTPS que efectivamente se use.
 2. Configurar `GOOGLE_MAPS_API_KEY` y `GOOGLE_MAPS_MAP_ID` en `.env`. Para pruebas del marcador con una Maps Demo Key se puede usar `DEMO_MAP_ID`. En el entorno de entrega usar el Map ID de la entidad. Ejecutar `php artisan config:clear` localmente si Laravel conservó una configuración anterior.
-3. Abrir `/establecimientos` y comprobar marcadores, comercios sin coordenadas y el listado cuando la clave esté ausente. La clave de navegador es visible al cargar el mapa y las restricciones del proyecto controlan su uso. Compartir su configuración mediante un canal de acceso de la entidad y mantener el valor fuera de Git.
+3. Abrir `/establecimientos` y comprobar el listado y las coordenadas. Para revisar marcadores con la clave de prueba, pulsar **Mostrar mapa** solo cuando haga falta. La vista carga una instancia por página y la reutiliza al filtrar. Para automatizar pruebas del frontend, simular el proveedor. Compartir la configuración de la clave mediante un canal de acceso de la entidad y mantener el valor fuera de Git.
 
 La ubicación del navegador requiere permiso del usuario. La búsqueda por radio recibe las coordenadas de origen. Si se incorpora geocodificación de una dirección manual, acordar el servicio y su configuración antes de añadir una llamada server-side. [Seguridad de Google Maps Platform](https://developers.google.com/maps/api-security-best-practices) · [Alternativa de prueba con Maps Demo Key](https://developers.google.com/maps/demo-key) · [Marcadores avanzados](https://developers.google.com/maps/documentation/javascript/advanced-markers/start)
 

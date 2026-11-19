@@ -17,7 +17,7 @@ Para peticiones autenticadas, conserva la cookie de sesión. Envía `Accept: app
 | GET `/sesion` | Sesión activa | `usuario` y `csrf_token` |
 | DELETE `/sesion` | Sesión iniciada | 204 |
 
-`usuario` contiene `id`, `name`, `email` y `rol`. El registro público permite `emprendedor` y `comercio`; la contraseña requiere al menos 12 caracteres y hasta 72 bytes. El rol `administrador` se asigna a una cuenta activa con `php artisan usuario:administrador correo@ejemplo.test`. Un administrador puede suspender otras cuentas y cambiar sus roles entre comercio y emprendedor.
+`usuario` contiene `id`, `name`, `email` y `rol`. El registro público permite `emprendedor` y `comercio`. Una contraseña nueva requiere al menos 12 caracteres y hasta 72 bytes. En una terminal, `php artisan usuario:crear correo@ejemplo.test --rol=administrador` crea una cuenta nueva con una contraseña ingresada de forma oculta. Para asignar ese rol a una cuenta activa ya existente, usa `php artisan usuario:administrador correo@ejemplo.test`. Un administrador puede suspender otras cuentas y cambiar sus roles entre comercio y emprendedor.
 
 Códigos habituales: 401 sin sesión, 403 por rol o suspensión, 404 cuando no existe o la cuenta no es propietaria, 409 por conflicto, 419 por CSRF vencido, 422 con `message` y `errors` para validación y 429 al superar el límite.
 
