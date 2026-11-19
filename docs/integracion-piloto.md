@@ -12,7 +12,7 @@ php artisan db:seed
 php artisan serve
 ```
 
-`db:seed` carga el catálogo y tres comercios ficticios. Para una base destinada a importar la encuesta, ejecuten solo `php artisan db:seed --class=CategoriaSeeder`. El catálogo incluye Lácteos, Leche, Queso, Yogurt y Mantequilla. Si necesitan probar administración, registren una cuenta local y promuévanla con `php artisan usuario:administrador admin@example.test`.
+`db:seed` carga el catálogo y tres comercios ficticios. Para una base destinada a importar la encuesta, ejecuten solo `php artisan db:seed --class=CategoriaSeeder`. El catálogo incluye Lácteos, Leche, Queso, Yogurt y Mantequilla. Si necesitan cuentas de prueba con rol, usen `php artisan usuario:crear admin@example.test --rol=administrador --clave='...'` (también acepta `--rol=emprendedor` o `--rol=comercio`).
 
 ## Michelle: listado, mapa y flujos con sesión
 
