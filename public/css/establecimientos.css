@@ -200,6 +200,34 @@ select {
     display: block;
 }
 
+.navegacion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.9rem;
+    margin-top: 0.75rem;
+}
+
+.navegacion a {
+    color: var(--tinta-suave);
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.navegacion a:hover {
+    color: var(--verde);
+}
+
+.navegacion form {
+    margin: 0;
+}
+
+.navegacion .boton {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.82rem;
+}
+
 .piloto {
     display: inline-flex;
     align-items: center;
