@@ -19,13 +19,13 @@ php artisan establecimientos:importar datos/ejemplos/encuesta-ficticia.csv \
 | `--fila-encabezado=N` | Fuerza la fila de encabezados cuando la detección automática falla. |
 | `--limite=N` | Procesa solo las primeras N filas de datos. |
 | `--categoria=NOMBRE` | Asocia esa categoría (debe existir y estar activa) a los comercios que comercializan lácteos. |
-| `--corregir-signo` | Convierte latitudes positivas evidentes en negativas (Ecuador está al sur). |
+| `--corregir-signo` | Corrige una posible inversión del signo cuando el punto corregido cae en la zona del piloto. Revisa la dirección antes de aplicar el cambio. |
 | `--permitir-coordenadas-dudosas` | Importa filas con coordenadas sospechosas en vez de dejarlas para revisión. |
 | `--json=RUTA` | Guarda el reporte completo; por defecto va a `storage/app/importaciones/`. |
 
 Estados del reporte: `importada`, `valida`, `invalida`, `posible_duplicado`, `revisar` y `reintentar`. El reporte incluye `candidatos` (duplicados fuertes dentro del archivo), `coincidencias` (mismo nombre o misma dirección por separado; son comunes entre comercios vecinos y no bloquean) y `candidatos_db` (IDs que ya existen en la base).
 
-Normalización aplicada: parroquias `Mulalo` → `Mulaló` y `Tanicuchi` → `Tanicuchí`; tipos `Minimarket`/`Mini Market` → `minimercado` y `Panadería` → `panaderia`; booleanos `Si`/`Sí`/`S`/`1`/`X` → `true`, `No`/`N`/`0` → `false`; teléfonos reducidos a dígitos; correos en minúsculas y sin tildes; contacto privado con `autorizar_contacto = false`; recepción siempre `por_confirmar`. `interes_encuesta` sale de la columna de interés en nuevos proveedores y la categoría solo se asocia si se indica `--categoria` y existe en el catálogo.
+Normalización aplicada: parroquias `Mulalo` → `Mulaló` y `Tanicuchi` → `Tanicuchí`; tipos `Minimarket`/`Mini Market` → `minimercado` y `Panadería` → `panaderia`; booleanos `Si`/`Sí`/`S`/`1`/`X` → `true`, `No`/`N`/`0` → `false`; teléfonos reducidos a dígitos; correos en minúsculas y sin tildes; contacto privado con `autorizar_contacto = false`; recepción siempre `por_confirmar`. `interes_encuesta` sale de la columna de interés en nuevos proveedores. Las categorías específicas salen de los productos vendidos. `--categoria` permite sumar una categoría activa a quienes comercializan lácteos.
 
 ## Preparación de lotes para la API
 
@@ -54,9 +54,9 @@ El encabezado se compara sin distinción de mayúsculas, tildes, espacios ni gui
 | `Nombre del propietario/administrador` | `perfil.contacto_nombre` (privado) |
 | `Telefono de contacto` | `perfil.contacto_telefono` (privado) |
 | `Correo electronico` | `perfil.contacto_email` (privado) |
-| `Horario de atencion` | `perfil.horario_proveedores` |
+| `Horario de atencion` | `perfil.horario_atencion` |
 | `Cuenta con refrigeracion` | `perfil.tiene_refrigeracion` |
-| `Producto lacteo con mayor demanda` | `perfil.productos_buscados` |
+| `Productos lacteos que comercializa` | Categorías activas del piloto en `categorias` |
 | `Interes en nuevos proveedores` | `interes_encuesta` (privado) |
 | `Latitud (GPS)`, `Longitud (GPS)` | `latitud`, `longitud` |
 
@@ -64,13 +64,13 @@ Alias adicionales admitidos: `nombre`, `nombre_comercial`, `razon_social`, `tipo
 
 Estas columnas del Excel no tienen campo en el esquema actual y aparecen en `sin_mapear` del informe. Brandon no crea migraciones: si se van a conservar, hay que acordar el formato y pedirle a Jorge la migración aditiva.
 
-`N°`, columna vacía inicial, `Provincia`, `N° aprox. clientes/dia`, `Comercializa lacteos`, `Productos lacteos que comercializa`, `Marcas que vende actualmente`, `Vende de productores locales`, `Volumen promedio compra semanal`, `Frecuencia de abastecimiento`, `Principal proveedor`, `Capacidad almacenamiento refrigerado`, `Interes en productos artesanales/asociaciones`, `Observaciones` y `Local propio o arrendado`.
+`N°`, columna vacía inicial, `Provincia`, `N° aprox. clientes/dia`, `Marcas que vende actualmente`, `Vende de productores locales`, `Producto lacteo con mayor demanda`, `Volumen promedio compra semanal`, `Frecuencia de abastecimiento`, `Principal proveedor`, `Capacidad almacenamiento refrigerado`, `Interes en productos artesanales/asociaciones`, `Observaciones` y `Local propio o arrendado`.
 
-Los textos «No tiene» y «No dispone de correo electrónico», presentes en el archivo real, se convierten en `null` en teléfono, correo y demás campos opcionales; el CSV de origen no se modifica. Las coordenadas se validan en `-90..90` y `-180..180`, se redondean a seis decimales y una sola coordenada sin la otra marca la fila como inválida. Las filas con el mismo nombre, dirección y teléfono se marcan como `posible_duplicado`, tanto contra la base como dentro del mismo archivo.
+Los textos «No tiene» y «No dispone de correo electrónico», presentes en el archivo real, se convierten en `null` en teléfono, correo y demás campos opcionales; el CSV de origen no se modifica. Las coordenadas se validan en `-90..90` y `-180..180`, se redondean a seis decimales y una sola coordenada sin la otra marca la fila como inválida. Consulta en el [contrato del backend](../docs/backend.md#administración-e-integración-de-excel) las reglas que marcan `posible_duplicado` al guardar.
 
 ## Archivos reales y datos ficticios
 
-El repositorio es público: el Excel real y los reportes con datos de contacto **no se suben a Git**. En esta copia local están `datos/privados/Lacteos_Datos_Unificados_Consolidado (1).xlsx` y `datos/privados/establecimientos.csv`, exportado con las 30 columnas y los 162 registros originales, ambos ignorados por Git. La columna de agrupación (`GRUPO N°1` … `GRUPO N°5`) llega sin encabezado, por lo que se ignora al mapear, pero las 162 fichas se conservan. El comando produce dos lotes porque el contrato limita cada carga a 100 fichas. Un registro tiene latitud positiva fuera del rango esperado de Latacunga; se conserva sin cambiar y debe corregirse desde la ficha con autorización de un administrador.
+El repositorio es público: el Excel real y los reportes con datos de contacto **no se suben a Git**. Puedes guardar el Excel y el CSV exportado en `datos/privados/`, directorio ignorado por Git. La columna de agrupación (`GRUPO N°1` … `GRUPO N°5`) llega sin encabezado, por lo que se ignora al mapear, pero las 162 fichas se conservan. El comando produce dos lotes porque el contrato limita cada carga a 100 fichas. Un registro tiene latitud positiva fuera del rango esperado de Latacunga; se conserva sin cambiar y debe corregirse desde la ficha con autorización de un administrador.
 
 ```bash
 php artisan db:seed
@@ -85,6 +85,6 @@ Los seeders crean las categorías y los tres comercios del ejemplo del listado, 
 
 ### Pendientes de coordinación
 
-- La comprobación de duplicados de `DatosEstablecimiento` también considera la dirección por sí sola. Varios comercios de la misma calle pueden quedar como `posible_duplicado` al guardar, aunque el reporte los clasifique como coincidencia leve. Revisar con Jorge si conviene exigir nombre o teléfono en esa regla.
-- El catálogo de categorías está vacío en una base recién migrada; `--categoria=Lácteos` no asocia nada hasta que exista esa categoría. Confirmar con Jorge quién carga el catálogo inicial.
-- Las 14 columnas pendientes listadas arriba requieren acuerdo con Jorge y una migración aditiva antes de conservarse.
+- Revisar con Jorge los casos marcados como posibles duplicados. El guardado admite comercios distintos en la misma calle y deja los teléfonos compartidos para revisión.
+- Ejecutar `php artisan db:seed --class=CategoriaSeeder` antes de importar. El catálogo incluye `Lácteos`, `Leche`, `Queso`, `Yogurt` y `Mantequilla`. Ambos flujos asocian categorías activas a partir de los productos vendidos. Para sumar la categoría general a quienes comercializan lácteos, usar `--categoria=Lácteos` en el importador directo.
+- Las columnas pendientes requieren acuerdo con Jorge y una migración aditiva antes de conservarse en la base.

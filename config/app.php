@@ -2,6 +2,8 @@
 
 return [
 
+    'publicar_interes_encuesta' => env('PUBLICAR_INTERES_ENCUESTA', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

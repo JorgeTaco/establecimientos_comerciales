@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Importacion\DetectorDuplicados;
 use App\Importacion\LectorHojaCalculo;
 use App\Importacion\MapeadorEstablecimientos;
+use App\Importacion\ResolutorCategoriasBD;
 use App\Importacion\RevisorCoordenadas;
 use App\Models\Categoria;
 use App\Support\DatosEstablecimiento;
@@ -32,7 +33,8 @@ class ImportarEstablecimientos extends Command
         MapeadorEstablecimientos $mapeador,
         RevisorCoordenadas $revisor,
         DetectorDuplicados $detector,
-        DatosEstablecimiento $establecimientos
+        DatosEstablecimiento $establecimientos,
+        ResolutorCategoriasBD $catalogo
     ): int {
         $ruta = (string) $this->argument('archivo');
 
@@ -123,8 +125,19 @@ class ImportarEstablecimientos extends Command
                 $resultado['requiere_revision'] = true;
             }
 
-            if ($categorias !== [] && ($resultado['origen']['comercializa_lacteos'] ?? null) === true) {
-                $resultado['datos']['categorias'] = $categorias;
+            $comercializaLacteos = $resultado['origen']['comercializa_lacteos'];
+            if ($comercializaLacteos !== false) {
+                $inferidas = $catalogo->resolver($resultado['origen']['categorias_lacteas']);
+                $ids = array_values(array_unique([
+                    ...($comercializaLacteos === true ? $categorias : []),
+                    ...$inferidas['ids'],
+                ]));
+                if ($ids !== []) {
+                    $resultado['datos']['categorias'] = $ids;
+                }
+                if ($inferidas['desconocidas'] !== []) {
+                    $resultado['avisos'][] = 'Categorías sin asociar: '.implode(', ', $inferidas['desconocidas']);
+                }
             }
 
             $erroresValidacion = $mapeador->validar($resultado['datos']);

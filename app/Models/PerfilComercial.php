@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable([
     'foto_url', 'direccion', 'canton', 'sector', 'productos_buscados', 'tiene_refrigeracion',
     'contacto_nombre', 'contacto_telefono', 'contacto_email', 'canales_contacto',
-    'contacto_autorizado_en', 'horario_proveedores', 'requisitos', 'modalidad_compra',
+    'contacto_autorizado_en', 'horario_atencion', 'horario_proveedores', 'requisitos', 'modalidad_compra',
     'pedido_inicial', 'devoluciones', 'decision_compra', 'verificado_en',
 ])]
 class PerfilComercial extends Model

@@ -28,11 +28,12 @@ class ImportarEstablecimientosTest extends TestCase
     public function test_importa_csv_valido_y_separa_invalidas_duplicados_y_coordenadas(): void
     {
         Categoria::query()->create(['nombre' => 'Lácteos']);
+        $leche = Categoria::query()->create(['nombre' => 'Leche']);
 
         $directorio = $this->directorioTemporal();
         $archivo = $this->escribirCsv($directorio, [
-            ['N°', 'Nombre del establecimiento', 'Tipo de establecimiento', 'Direccion completa', 'Provincia', 'Canton', 'Parroquia', 'Barrio o sector', 'Telefono de contacto', 'Correo electronico', 'Comercializa lacteos', 'Interes en nuevos proveedores', 'Latitud (GPS)', 'Longitud (GPS)'],
-            ['1', 'Tienda Ejemplo', 'Tienda', 'Mulalo, Calle 4 De Octubre', 'Cotopaxi', 'Latacunga', 'Mulalo', 'Centro', '0991234567', 'demo@example.test', 'Si', 'Si', '-0.933', '-78.615'],
+            ['N°', 'Nombre del establecimiento', 'Tipo de establecimiento', 'Direccion completa', 'Provincia', 'Canton', 'Parroquia', 'Barrio o sector', 'Telefono de contacto', 'Correo electronico', 'Comercializa lacteos', 'Interes en nuevos proveedores', 'Latitud (GPS)', 'Longitud (GPS)', 'Productos lacteos que comercializa', 'Horario de atencion'],
+            ['1', 'Tienda Ejemplo', 'Tienda', 'Mulalo, Calle 4 De Octubre', 'Cotopaxi', 'Latacunga', 'Mulalo', 'Centro', '0991234567', 'demo@example.test', 'Si', 'Si', '-0.933', '-78.615', 'Leche, Otros', '08:00 a 20:00'],
             ['2', 'Tienda Ejemplo', 'Tienda', 'Otra Calle', 'Cotopaxi', 'Latacunga', 'Mulalo', 'La Esperanza', '0991234567', 'demo2@example.test', 'No', 'No', '', ''],
             ['3', '', 'Tienda', 'Calle X', 'Cotopaxi', 'Latacunga', 'Mulalo', '', '0999999999', '', 'No', 'No', '', ''],
             ['4', 'Panaderia Alpina', 'Panaderia', 'Calle Y', 'Cotopaxi', 'Latacunga', 'Tanicuchi', '', '0988888888', '', 'Si', 'Si', '0.986182', '-78.582756'],
@@ -72,7 +73,11 @@ class ImportarEstablecimientosTest extends TestCase
         $this->assertSame('demo@example.test', $perfil->contacto_email);
         $this->assertTrue($perfil->interes_encuesta);
         $this->assertNull($perfil->contacto_autorizado_en);
-        $this->assertCount(1, $establecimiento->categorias);
+        $this->assertCount(2, $establecimiento->categorias);
+        $this->assertTrue($establecimiento->categorias->contains($leche));
+        $this->assertNull($perfil->productos_buscados);
+        $this->assertSame('08:00 a 20:00', $perfil->horario_atencion);
+        $this->assertNull($perfil->horario_proveedores);
 
         // Una segunda pasada no vuelve a crear la misma ficha.
         $this->artisan('establecimientos:importar', [

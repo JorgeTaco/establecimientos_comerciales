@@ -137,4 +137,66 @@ class GestionComercialTest extends TestCase
         $this->postJson('/api/fotos', ['foto' => $archivo])->assertCreated()->assertJsonStructure(['foto_url']);
         $this->assertCount(1, Storage::disk('public')->allFiles('fotos'));
     }
+
+    public function test_listado_extendido_filtra_parroquia_e_interes_autorizado(): void
+    {
+        $administrador = User::factory()->create(['rol' => 'administrador']);
+        $filas = [
+            ['nombre' => 'Tienda Norte', 'tipo' => 'tienda', 'parroquia' => 'Lasso', 'interes_encuesta' => true,
+                'perfil' => ['direccion' => 'Calle Norte', 'sector' => 'Centro', 'horario_atencion' => '08:00 a 20:00']],
+            ['nombre' => 'Tienda Sur', 'tipo' => 'tienda', 'parroquia' => 'Mulaló', 'interes_encuesta' => false,
+                'perfil' => ['direccion' => 'Calle Sur', 'sector' => 'Lasso']],
+            ['nombre' => 'Tienda Centro', 'tipo' => 'tienda', 'parroquia' => 'Lasso'],
+        ];
+        $id = $this->actingAs($administrador)->postJson('/api/admin/establecimientos/importar', ['filas' => $filas])
+            ->assertOk()->assertJsonPath('resultados.2.estado', 'creado')->json('resultados.0.establecimiento_id');
+
+        $this->get('/establecimientos')->assertOk()->assertDontSee('filtro-interes');
+        $this->getJson('/api/establecimientos/buscar?parroquia=Lasso')->assertOk()
+            ->assertJsonCount(2, 'establecimientos')
+            ->assertJsonPath('establecimientos.1.sector', 'Centro')
+            ->assertJsonPath('establecimientos.1.direccion', 'Calle Norte')
+            ->assertJsonMissingPath('establecimientos.1.interesDeclarado');
+        $this->getJson('/api/establecimientos/buscar?interes_declarado=0')->assertUnprocessable();
+
+        config(['app.publicar_interes_encuesta' => true]);
+        $this->get('/establecimientos')->assertOk()->assertSee('filtro-interes');
+        $this->getJson('/api/establecimientos/buscar?parroquia=Lasso&interes_declarado=1')->assertOk()
+            ->assertJsonCount(1, 'establecimientos')
+            ->assertJsonPath('establecimientos.0.id', $id)
+            ->assertJsonPath('establecimientos.0.interesDeclarado', true)
+            ->assertJsonPath('establecimientos.0.recepcionProveedores', 'por_confirmar');
+        $this->getJson('/api/establecimientos/buscar?interes_declarado=0')->assertOk()
+            ->assertJsonCount(1, 'establecimientos')
+            ->assertJsonPath('establecimientos.0.interesDeclarado', false);
+        $this->getJson("/api/establecimientos/$id")->assertOk()
+            ->assertJsonPath('establecimiento.interesDeclarado', true)
+            ->assertJsonPath('establecimiento.contacto', null)
+            ->assertJsonPath('establecimiento.horario_atencion', '08:00 a 20:00')
+            ->assertJsonPath('establecimiento.horario_proveedores', null);
+        $this->getJson('/api/establecimientos')->assertOk()->assertJsonMissingPath('establecimientos.1.interesDeclarado');
+    }
+
+    public function test_importar_no_bloquea_comercios_que_solo_comparten_nombre_o_direccion(): void
+    {
+        $administrador = User::factory()->create(['rol' => 'administrador']);
+        $base = ['nombre' => 'Tienda Demo', 'tipo' => 'tienda', 'parroquia' => 'Lasso',
+            'perfil' => ['direccion' => 'Calle 1', 'contacto_telefono' => '+593991234567']];
+        $mismaDireccion = array_replace($base, ['nombre' => 'Tienda Vecina', 'perfil' => ['direccion' => 'Calle 1']]);
+        $mismoNombre = array_replace($base, ['perfil' => ['direccion' => 'Calle 2']]);
+        $mismoTelefono = array_replace($base, ['nombre' => 'Tienda Otra', 'perfil' => ['contacto_telefono' => '593991234567']]);
+
+        $id = $this->actingAs($administrador)->postJson('/api/admin/establecimientos/importar', ['filas' => [$base]])
+            ->assertOk()->assertJsonPath('resultados.0.estado', 'creado')->json('resultados.0.establecimiento_id');
+        $this->postJson('/api/admin/establecimientos/duplicados', $mismaDireccion)->assertOk()
+            ->assertJsonPath('candidatos.0', $id);
+        $this->postJson('/api/admin/establecimientos/importar', [
+            'filas' => [$mismaDireccion, $mismoNombre, $base, $mismoTelefono],
+        ])->assertOk()
+            ->assertJsonPath('resultados.0.estado', 'creado')
+            ->assertJsonPath('resultados.1.estado', 'creado')
+            ->assertJsonPath('resultados.2.estado', 'posible_duplicado')
+            ->assertJsonPath('resultados.3.candidatos.0', $id);
+        $this->assertDatabaseCount('establecimientos', 3);
+    }
 }

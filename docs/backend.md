@@ -25,7 +25,7 @@ Códigos habituales: 401 sin sesión, 403 por rol o suspensión, 404 cuando no e
 | Método y ruta bajo `/api` | Acceso | Salida |
 | --- | --- | --- |
 | GET `/establecimientos` | Público | `establecimientos` con el contrato original |
-| GET `/establecimientos/buscar` | Público | `establecimientos` con los campos del listado y `distanciaKm` |
+| GET `/establecimientos/buscar` | Público | `establecimientos` con los campos del listado y `distanciaKm`, `direccion`, `sector` y `foto_url`, que pueden ser `null` |
 | GET `/establecimientos/{id}` | Público | `establecimiento` con la ficha |
 | GET `/categorias` | Público | `categorias` activas con `id` y `nombre` |
 | GET `/mis-establecimientos` | Comercio | `establecimientos` propios con fichas |
@@ -35,7 +35,9 @@ Códigos habituales: 401 sin sesión, 403 por rol o suspensión, 404 cuando no e
 | POST `/establecimientos/{id}/reportes` | Cuenta activa | 201 con `reporte`. Envía `descripcion` |
 | POST `/fotos` | Cuenta activa | 201 con `foto_url`. Envía `multipart/form-data` con `foto` JPG, PNG o WebP de máximo 4 MB |
 
-La búsqueda acepta `q` para nombre, dirección, parroquia, sector o cantón, además de los filtros `canton`, `sector`, `tipo`, `categoria_id` y `recepcionProveedores`. Para distancia usa `latitud`, `longitud` y opcionalmente `distancia_km` (radio máximo 500 km). Con origen, los resultados se ordenan por distancia. `distanciaKm` es una distancia en línea recta o `null` si falta ubicación. La interfaz puede obtener el origen por GPS con autorización o a partir de la dirección ingresada por el usuario. La ficha devuelve `como_llegar_url` para abrir Google Maps.
+La búsqueda acepta `q` para nombre, dirección, parroquia, sector o cantón, además de los filtros `canton`, `parroquia`, `sector`, `tipo`, `categoria_id` y `recepcionProveedores`. Usa `parroquia` para una coincidencia exacta en ese campo. Para distancia usa `latitud`, `longitud` y opcionalmente `distancia_km` (radio máximo 500 km). Con origen, los resultados se ordenan por distancia. `distanciaKm` es una distancia en línea recta o `null` si falta ubicación. La interfaz puede obtener el origen por GPS con autorización o a partir de la dirección ingresada por el usuario. La ficha devuelve `como_llegar_url` para abrir Google Maps.
+
+Con `PUBLICAR_INTERES_ENCUESTA=true`, la búsqueda ampliada y la ficha incluyen `interesDeclarado` con valor `true`, `false` o `null`. La búsqueda admite `interes_declarado=1` o `0`. Las respuestas desconocidas quedan fuera de ambos filtros. El valor predeterminado mantiene las respuestas privadas. Habilítalo para datos ficticios en desarrollo o cuando esté autorizada la publicación de la encuesta real. `recepcionProveedores` conserva el estado de recepción comercial.
 
 Al registrar, envía `nombre`, `tipo` y `parroquia`. Los demás campos son opcionales. Ejemplo de alta o de una fila normalizada por Brandon.
 
@@ -65,6 +67,8 @@ Al registrar, envía `nombre`, `tipo` y `parroquia`. Los demás campos son opcio
 La API admite ambos puntos como números en rango o ambos como `null`. `categorias` es una lista de IDs activos; enviarla vacía elimina las asociaciones. El objeto `perfil` también admite `foto_url`, `requisitos`, `devoluciones`, `contacto_nombre`, `contacto_telefono`, `contacto_email`, `canales_contacto` y `autorizar_contacto`. Los canales son `telefono`, `whatsapp` y `email`. En una ficha pública, `contacto` es `null` hasta otorgar autorización explícita y devuelve `nombre`, `telefono`, `email` y `canales` solo según esa autorización. Al cambiar los datos de contacto, se exige volver a autorizar. Los teléfonos se guardan sin espacios, guiones ni paréntesis. Los valores de `modalidad_compra` son `contado`, `credito`, `consignacion`. Los de `decision_compra` son `sucursal` y `oficina_central`.
 
 La ficha amplía los campos del listado con `foto_url`, `direccion`, `canton`, `sector`, `categorias` (objetos de `id` y `nombre`), `productos_buscados`, `tiene_refrigeracion`, `horario_proveedores`, `requisitos`, `modalidad_compra`, `pedido_inicial`, `devoluciones`, `decision_compra`, `verificado_en`, `actualizado_en`, `contacto` y `como_llegar_url`. Una edición invalida la verificación hasta que un administrador la confirme de nuevo.
+
+El campo `perfil.horario_atencion` acepta el horario general informado por el establecimiento y la ficha lo devuelve como `horario_atencion`. Usa `perfil.horario_proveedores` para el horario comercial específico y `productos_buscados` para necesidades declaradas por el comercio.
 
 ## Productos, catálogo y coincidencias
 
@@ -116,6 +120,8 @@ Estados del seguimiento en orden comercial: `por_contactar`, `contactado`, `mues
 | POST `/establecimientos/duplicados` | Recibe una ficha normalizada y devuelve IDs en `candidatos` |
 | POST `/establecimientos/importar` | `filas` normalizadas; devuelve `resultados` |
 
-Brandon puede convertir el Excel en lotes de hasta 100 fichas con el JSON de ejemplo de esta guía. Las categorías deben existir antes de asociarlas. Cada fila admite `interes_encuesta` como booleano o nulo para conservar la respuesta original en privado. Cada resultado incluye `fila` (índice desde cero) y `estado`. Las filas `creado` incluyen `establecimiento_id`; las `posible_duplicado` incluyen `candidatos`; las `invalida` incluyen `errores` y las `reintentar` se pueden reenviar cuando termine otra carga. Las coincidencias por nombre, dirección o teléfono se revisan manualmente. La carga conserva los contactos como privados y asigna `por_confirmar` a la recepción. La lectura del archivo Excel y su mapeo quedan en el importador de Brandon. El Excel real se mantiene fuera de Git.
+Brandon puede convertir el Excel en lotes de hasta 100 fichas con el JSON de ejemplo de esta guía. Las categorías deben existir antes de asociarlas. Cada fila admite `interes_encuesta` como booleano o nulo. Cada resultado incluye `fila` (índice desde cero) y `estado`. Las filas `creado` incluyen `establecimiento_id`, las `posible_duplicado` incluyen `candidatos` y las `invalida` incluyen `errores`. Las filas `reintentar` se pueden reenviar cuando termine otra carga.
+
+La consulta administrativa de candidatos muestra coincidencias por nombre, dirección o teléfono. La importación detiene filas con teléfono compartido o nombre y dirección coincidentes. En fichas sin dirección, usa nombre, tipo, parroquia y el teléfono disponible para detectar reintentos. La carga conserva los contactos como privados y asigna `por_confirmar` a la recepción. El Excel real se mantiene fuera de Git.
 
 Para probar las fotos en local, ejecuta `php artisan storage:link` y configura `APP_URL` con el origen de la app. El mapa requiere una clave válida de Google Maps en el entorno de la interfaz. [Autenticación Laravel](https://laravel.com/framework/docs/13.x/authentication) · [Almacenamiento Laravel](https://laravel.com/framework/docs/13.x/filesystem) · [Enlaces de Google Maps](https://developers.google.com/maps/documentation/urls/get-started)
