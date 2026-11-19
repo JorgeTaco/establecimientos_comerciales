@@ -15,6 +15,7 @@ php artisan establecimientos:importar datos/ejemplos/encuesta-ficticia.csv \
 | Opción | Uso |
 | --- | --- |
 | `--dry-run` | Analiza y reporta, pero no escribe en la base. |
+| `--archivar` | Guarda todas las filas y columnas en **Panel administrativo → Encuestas importadas** y vincula cada fila importada con su ficha en el directorio. Úsalo en una carga completa. Repetir la misma carga conserva el archivo anterior. |
 | `--hoja=NOMBRE` | Elige una hoja del `.xlsx` por nombre o número. |
 | `--fila-encabezado=N` | Fuerza la fila de encabezados cuando la detección automática falla. |
 | `--limite=N` | Procesa solo las primeras N filas de datos. |
@@ -22,6 +23,8 @@ php artisan establecimientos:importar datos/ejemplos/encuesta-ficticia.csv \
 | `--corregir-signo` | Corrige una posible inversión del signo cuando el punto corregido cae en la zona del piloto. Revisa la dirección antes de aplicar el cambio. |
 | `--permitir-coordenadas-dudosas` | Importa filas con coordenadas sospechosas en vez de dejarlas para revisión. |
 | `--json=RUTA` | Guarda el reporte completo; por defecto va a `storage/app/importaciones/`. |
+
+La vista administrativa conserva las celdas originales, incluidas las columnas sin campo comercial. Las filas pendientes se pueden consultar por estado. Los contactos de la encuesta son privados hasta su autorización explícita.
 
 Estados del reporte: `importada`, `valida`, `invalida`, `posible_duplicado`, `revisar` y `reintentar`. El reporte incluye `candidatos` (duplicados fuertes dentro del archivo), `coincidencias` (mismo nombre o misma dirección por separado; son comunes entre comercios vecinos y no bloquean) y `candidatos_db` (IDs que ya existen en la base).
 

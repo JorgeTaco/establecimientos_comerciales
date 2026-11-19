@@ -33,6 +33,12 @@ class RutaNavegacion extends Component
             'propuestas.responder' => [$this->enlace('Propuestas recibidas', 'propuestas.recibidas')],
             'comercio.crear', 'comercio.editar' => $this->origenFormularioComercio($solicitud),
             'establecimientos.ficha' => $this->origenFicha($solicitud),
+            'admin.encuestas.index' => [$this->enlace('Panel administrativo', 'admin.indicadores')],
+            'admin.encuestas.show' => [$this->enlace('Encuestas importadas', 'admin.encuestas.index')],
+            'admin.encuestas.filas.show' => [
+                $this->enlace('Encuestas importadas', 'admin.encuestas.index'),
+                $this->enlace('Filas de la encuesta', 'admin.encuestas.show', $solicitud->route('encuesta')),
+            ],
             default => [],
         };
 

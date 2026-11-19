@@ -8,10 +8,14 @@ use App\Importacion\MapeadorEstablecimientos;
 use App\Importacion\ResolutorCategoriasBD;
 use App\Importacion\RevisorCoordenadas;
 use App\Models\Categoria;
+use App\Models\EncuestaImportada;
 use App\Support\DatosEstablecimiento;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Throwable;
 
 class ImportarEstablecimientos extends Command
@@ -22,6 +26,7 @@ class ImportarEstablecimientos extends Command
         {--fila-encabezado= : Número de fila del encabezado (1-based); se detecta si se omite}
         {--categoria=* : Categoría a asociar a los comercios que comercializan lácteos}
         {--dry-run : Analiza el archivo y muestra el reporte sin guardar nada}
+        {--archivar : Conserva las filas y columnas originales en el panel de administración}
         {--carga-web : Aplica los límites de la carga administrativa web}
         {--json= : Ruta del reporte JSON}
         {--limite= : Procesa solo las primeras N filas}
@@ -38,6 +43,12 @@ class ImportarEstablecimientos extends Command
         ResolutorCategoriasBD $catalogo
     ): int {
         $ruta = (string) $this->argument('archivo');
+        $archivar = (bool) $this->option('archivar');
+        if ($archivar && ($this->option('dry-run') || $this->option('limite') !== null)) {
+            $this->error('Para archivar una encuesta, ejecuta una carga completa sin simulación.');
+
+            return self::FAILURE;
+        }
 
         try {
             $lector = new LectorHojaCalculo($ruta, (bool) $this->option('carga-web'));
@@ -172,7 +183,19 @@ class ImportarEstablecimientos extends Command
         $this->mostrarCoincidencias($resultados);
         $this->mostrarCoordenadas($resultados);
 
-        if (! $this->option('dry-run')) {
+        if ($archivar) {
+            try {
+                $nueva = $this->guardarEncuesta($ruta, $hoja, $indiceEncabezado, $filas, $resultados, $resumenAntes, $establecimientos, $detector);
+            } catch (Throwable $error) {
+                report($error);
+                $this->error('La carga de la encuesta se revirtió. Revisa el registro de Laravel antes de reintentar.');
+
+                return self::FAILURE;
+            }
+            if (! $nueva) {
+                return self::SUCCESS;
+            }
+        } elseif (! $this->option('dry-run')) {
             $this->newLine();
             $this->info('Guardando filas válidas...');
             $this->guardar($resultados, $establecimientos, $detector);
@@ -203,6 +226,52 @@ class ImportarEstablecimientos extends Command
         $this->guardarReporte($ruta, $hoja, $indiceEncabezado, $resultados, $resumen, $resumenAntes);
 
         return $resumen['errores'] > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    private function guardarEncuesta(
+        string $ruta, ?string $hoja, int $indiceEncabezado, array $filas, array &$resultados, array $resumenAntes,
+        DatosEstablecimiento $establecimientos, DetectorDuplicados $detector,
+    ): bool {
+        $huellaArchivo = hash_file('sha256', $ruta);
+        if ($huellaArchivo === false) {
+            throw new RuntimeException('No se pudo verificar el archivo.');
+        }
+
+        $huella = hash('sha256', $huellaArchivo."\0".$hoja."\0".$indiceEncabezado);
+
+        return DB::transaction(function () use ($ruta, $huella, $indiceEncabezado, $filas, &$resultados, $resumenAntes, $establecimientos, $detector) {
+            $encuesta = EncuestaImportada::query()->createOrFirst(['huella' => $huella], [
+                'archivo' => basename($ruta),
+                'fila_encabezado' => $indiceEncabezado + 1,
+                'encabezados' => $filas[$indiceEncabezado],
+                'resumen' => [],
+            ]);
+            if (! $encuesta->wasRecentlyCreated) {
+                $this->info('La encuesta ya está archivada. Consulta Administración → Encuestas importadas.');
+
+                return false;
+            }
+
+            $this->info('Guardando fichas y archivando los datos de la encuesta...');
+            $this->guardar($resultados, $establecimientos, $detector);
+            $resumen = $this->resumen($resultados);
+            if ($resumen['errores'] > 0 || $resumen['reintentar'] > 0) {
+                throw new RuntimeException('Hubo errores de guardado. Ejecuta nuevamente la carga.');
+            }
+
+            $encuesta->filas()->createMany(array_map(fn (array $fila) => [
+                'numero' => $fila['fila'],
+                'establecimiento_id' => $fila['establecimiento_id'],
+                'nombre' => $fila['nombre'],
+                'estado' => $fila['estado'],
+                'celdas' => $filas[$fila['fila'] - 1],
+                'revision' => Arr::only($fila, ['avisos', 'errores', 'coordenadas', 'candidatos', 'coincidencias', 'candidatos_db']),
+            ], $resultados));
+            $encuesta->update(['resumen' => $resumen + ['validas_para_importar' => $resumenAntes['validas']]]);
+            $this->info('Encuesta archivada. Consulta Administración → Encuestas importadas.');
+
+            return true;
+        });
     }
 
     /**

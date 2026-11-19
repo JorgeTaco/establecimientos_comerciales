@@ -6,6 +6,7 @@
         <a href="#usuarios">Usuarios</a>
         <a href="#reportes">Reportes</a>
         <a href="#importacion">Importación</a>
+        <a href="{{ route('admin.encuestas.index') }}">Encuestas importadas</a>
         <a href="{{ route('comercio.crear') }}">Registrar establecimiento</a>
     </nav>
 
