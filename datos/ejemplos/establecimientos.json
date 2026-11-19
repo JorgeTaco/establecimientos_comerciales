@@ -1,0 +1,31 @@
+{
+  "establecimientos": [
+    {
+      "id": "ejemplo-001",
+      "nombre": "Tienda Demo Amanecer",
+      "tipo": "tienda",
+      "parroquia": "Mulaló",
+      "latitud": -0.775,
+      "longitud": -78.58,
+      "recepcionProveedores": "recibe_propuestas"
+    },
+    {
+      "id": "ejemplo-002",
+      "nombre": "Minimercado Demo Los Pinos",
+      "tipo": "minimercado",
+      "parroquia": "Tanicuchí",
+      "latitud": -0.81,
+      "longitud": -78.635,
+      "recepcionProveedores": "no_recibe_por_ahora"
+    },
+    {
+      "id": "ejemplo-003",
+      "nombre": "Supermercado Demo Cotopaxi",
+      "tipo": "supermercado",
+      "parroquia": "Guaytacama",
+      "latitud": null,
+      "longitud": null,
+      "recepcionProveedores": "por_confirmar"
+    }
+  ]
+}
