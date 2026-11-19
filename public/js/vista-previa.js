@@ -42,19 +42,21 @@
             listado.append(tarjeta);
             return {
                 elemento: listado.lastElementChild,
-                estado: comercio.estadoClave,
+                comercio: comercio,
                 texto: normalizarBusqueda([comercio.nombre, comercio.parroquia, comercio.sector, comercio.direccion].join(' '))
             };
         });
         function actualizar() {
             var termino = normalizarBusqueda(buscar.value.trim());
-            var visibles = 0;
+            var visibles = [];
             tarjetas.forEach(function (tarjeta) {
-                var coincide = tarjeta.texto.includes(termino) && (!recepcion.value || tarjeta.estado === recepcion.value);
+                var coincide = tarjeta.texto.includes(termino) && (!recepcion.value || tarjeta.comercio.estadoClave === recepcion.value);
                 tarjeta.elemento.hidden = !coincide;
-                if (coincide) visibles += 1;
+                if (coincide) visibles.push(tarjeta.comercio);
             });
-            estado.textContent = visibles ? visibles + (visibles === 1 ? ' ficha disponible' : ' fichas disponibles') : 'Ninguna ficha coincide con la búsqueda.';
+            var total = visibles.length;
+            estado.textContent = total ? total + (total === 1 ? ' ficha disponible' : ' fichas disponibles') : 'Ninguna ficha coincide con la búsqueda.';
+            window.MapaVistaPrevia?.actualizar(visibles);
         }
         buscar.addEventListener('input', actualizar);
         recepcion.addEventListener('change', actualizar);

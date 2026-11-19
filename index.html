@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Vista previa del directorio de establecimientos para emprendedores de lácteos en Latacunga.">
     <title>Establecimientos comerciales · Vista previa</title>
-    <link rel="stylesheet" href="public/css/establecimientos.css">
+    <link rel="stylesheet" href="public/css/establecimientos.css?v=2">
     <link rel="stylesheet" href="public/css/navegacion.css?v=2">
     <script src="public/js/datos-establecimientos.js" defer></script>
-    <script src="public/js/vista-previa.js?v=2" defer></script>
+    <script src="public/js/mapa-vista-previa.js" defer></script>
+    <script src="public/js/vista-previa.js?v=3" defer></script>
 </head>
 <body class="directorio">
     <header class="cabecera cabecera--directorio cabecera--navegacion">
@@ -52,6 +53,13 @@
                 </div>
             </div>
             <p id="estado-vista-previa" role="status">Cargando los comercios de ejemplo…</p>
+            <button class="boton boton--secundario" id="mostrar-mapa-ejemplo" type="button"
+                aria-expanded="false" aria-controls="panel-mapa-ejemplo" hidden>Mostrar mapa</button>
+            <div class="vista-previa__mapa" id="panel-mapa-ejemplo" hidden>
+                <p id="estado-mapa-ejemplo" role="status"></p>
+                <div class="mapa__lienzo" id="mapa-ejemplo" role="region" aria-label="Mapa de los comercios filtrados"
+                    data-google-maps-key="" data-google-maps-map-id=""></div>
+            </div>
             <ul class="listado" id="comercios-ejemplo"></ul>
             <template id="comercio-ejemplo">
                 <li class="tarjeta">
