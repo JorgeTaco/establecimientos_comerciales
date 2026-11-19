@@ -1,5 +1,121 @@
-# API y base de datos
+# Contratos del backend
 
-Jorge desarrolla la API, la persistencia, la autenticación y los permisos en Laravel. El primer avance es registrar en [`routes/api.php`](../routes/api.php) el listado definido en el [contrato inicial](contrato-establecimientos.md) y comprobarlo con el [ejemplo ficticio](../datos/ejemplos/establecimientos.json).
+Las rutas usan el prefijo `/api`. Las propiedades documentadas mantienen su nombre, tipo, significado y valores publicados. Un cambio compatible se añade en un campo opcional o en una ruta nueva. Las migraciones que ya se aplicaron se amplían con otra migración. Un cambio incompatible requiere una ruta versionada y coordinación previa entre Jorge, Michelle y Brandon.
 
-Jorge crea las migraciones de MySQL y acuerda con Brandon el formato de importación antes de conectar los datos a la base. Jorge y Michelle prueban juntos el primer consumo de la API.
+El [listado inicial](contrato-establecimientos.md) mantiene su formato exacto. Los identificadores de establecimientos salen como cadenas. Los de usuarios, categorías, productos, oportunidades y propuestas salen como números y las rutas los reciben en decimal. Los precios del catálogo salen como cadenas decimales de dos posiciones en USD. Las fechas de gestión usan `AAAA-MM-DD`. Los demás tiempos salen en ISO 8601. Los atributos opcionales admiten `null` cuando el campo lo permite. En un `PATCH` la omisión conserva el valor actual.
+
+## Sesión para Blade o JavaScript del mismo origen
+
+Para peticiones autenticadas, conserva la cookie de sesión. Envía `Accept: application/json` y, en cada escritura, `X-CSRF-TOKEN`. Obtén el token con `GET /api/sesion/csrf` o con `csrf_token()` en Blade. Usa el token nuevo que devuelve el registro o inicio de sesión. Las rutas de escritura con JSON usan `Content-Type: application/json`.
+
+| Método y ruta bajo `/api` | Entrada | Salida |
+| --- | --- | --- |
+| GET `/sesion/csrf` | — | `csrf_token` |
+| POST `/registro` | `name`, `email`, `password`, `password_confirmation`, `rol` | 201 con `usuario` y `csrf_token` |
+| POST `/sesion` | `email`, `password` | `usuario` y `csrf_token` |
+| GET `/sesion` | Sesión activa | `usuario` y `csrf_token` |
+| DELETE `/sesion` | Sesión iniciada | 204 |
+
+`usuario` contiene `id`, `name`, `email` y `rol`. El registro público permite `emprendedor` y `comercio`; la contraseña requiere al menos 12 caracteres y hasta 72 bytes. El rol `administrador` se asigna a una cuenta activa con `php artisan usuario:administrador correo@ejemplo.test`. Un administrador puede suspender otras cuentas y cambiar sus roles entre comercio y emprendedor.
+
+Códigos habituales: 401 sin sesión, 403 por rol o suspensión, 404 cuando no existe o la cuenta no es propietaria, 409 por conflicto, 419 por CSRF vencido, 422 con `message` y `errors` para validación y 429 al superar el límite.
+
+## Directorio y ficha comercial
+
+| Método y ruta bajo `/api` | Acceso | Salida |
+| --- | --- | --- |
+| GET `/establecimientos` | Público | `establecimientos` con el contrato original |
+| GET `/establecimientos/buscar` | Público | `establecimientos` con los campos del listado y `distanciaKm` |
+| GET `/establecimientos/{id}` | Público | `establecimiento` con la ficha |
+| GET `/categorias` | Público | `categorias` activas con `id` y `nombre` |
+| GET `/mis-establecimientos` | Comercio | `establecimientos` propios con fichas |
+| GET `/mis-establecimientos/{id}` | Responsable o administrador | Ficha en `establecimiento` y datos privados en `edicion` |
+| POST `/establecimientos` | Comercio o administrador | 201 con `establecimiento` |
+| PATCH `/establecimientos/{id}` | Responsable o administrador | `establecimiento` |
+| POST `/establecimientos/{id}/reportes` | Cuenta activa | 201 con `reporte`. Envía `descripcion` |
+| POST `/fotos` | Cuenta activa | 201 con `foto_url`. Envía `multipart/form-data` con `foto` JPG, PNG o WebP de máximo 4 MB |
+
+La búsqueda acepta `q` para nombre, dirección, parroquia, sector o cantón, además de los filtros `canton`, `sector`, `tipo`, `categoria_id` y `recepcionProveedores`. Para distancia usa `latitud`, `longitud` y opcionalmente `distancia_km` (radio máximo 500 km). Con origen, los resultados se ordenan por distancia. `distanciaKm` es una distancia en línea recta o `null` si falta ubicación. La interfaz puede obtener el origen por GPS con autorización o a partir de la dirección ingresada por el usuario. La ficha devuelve `como_llegar_url` para abrir Google Maps.
+
+Al registrar, envía `nombre`, `tipo` y `parroquia`. Los demás campos son opcionales. Ejemplo de alta o de una fila normalizada por Brandon.
+
+```json
+{
+  "nombre": "Tienda Demo Centro",
+  "tipo": "tienda",
+  "parroquia": "Mulaló",
+  "latitud": -0.775,
+  "longitud": -78.58,
+  "recepcion_proveedores": "por_confirmar",
+  "categorias": [1],
+  "perfil": {
+    "direccion": "Avenida ficticia",
+    "canton": "Latacunga",
+    "sector": "Centro",
+    "productos_buscados": ["Yogur"],
+    "tiene_refrigeracion": true,
+    "horario_proveedores": "Lunes de 09:00 a 11:00",
+    "modalidad_compra": "contado",
+    "pedido_inicial": 12,
+    "decision_compra": "sucursal"
+  }
+}
+```
+
+La API admite ambos puntos como números en rango o ambos como `null`. `categorias` es una lista de IDs activos; enviarla vacía elimina las asociaciones. El objeto `perfil` también admite `foto_url`, `requisitos`, `devoluciones`, `contacto_nombre`, `contacto_telefono`, `contacto_email`, `canales_contacto` y `autorizar_contacto`. Los canales son `telefono`, `whatsapp` y `email`. En una ficha pública, `contacto` es `null` hasta otorgar autorización explícita y devuelve `nombre`, `telefono`, `email` y `canales` solo según esa autorización. Al cambiar los datos de contacto, se exige volver a autorizar. Los teléfonos se guardan sin espacios, guiones ni paréntesis. Los valores de `modalidad_compra` son `contado`, `credito`, `consignacion`. Los de `decision_compra` son `sucursal` y `oficina_central`.
+
+La ficha amplía los campos del listado con `foto_url`, `direccion`, `canton`, `sector`, `categorias` (objetos de `id` y `nombre`), `productos_buscados`, `tiene_refrigeracion`, `horario_proveedores`, `requisitos`, `modalidad_compra`, `pedido_inicial`, `devoluciones`, `decision_compra`, `verificado_en`, `actualizado_en`, `contacto` y `como_llegar_url`. Una edición invalida la verificación hasta que un administrador la confirme de nuevo.
+
+## Productos, catálogo y coincidencias
+
+Estas rutas requieren una cuenta de emprendedor, salvo el catálogo público.
+
+| Método y ruta bajo `/api` | Entrada | Salida |
+| --- | --- | --- |
+| GET `/productos` | — | `productos` propios, incluidos archivados |
+| POST `/productos` | Datos del producto | 201 con `producto` |
+| GET `/productos/{id}` | — | `producto` propio |
+| PATCH `/productos/{id}` | Campos a editar | `producto` |
+| DELETE `/productos/{id}` | — | 204. Registra `archivado_en` |
+| GET `/productos/{id}/ficha.pdf` | — | PDF descargable |
+| GET `/productos/{id}/establecimientos-compatibles` | — | `establecimientos` con `motivos`, `pendientes` y un `aviso` general |
+| POST `/catalogo/compartir` | — | `url` revocable |
+| DELETE `/catalogo/compartir` | — | 204 |
+| GET `/catalogos/{token}` | Público con enlace | `catalogo.nombre` y `catalogo.productos` activos |
+
+El producto requiere `nombre` y `categoria_id`. Los demás datos son `descripcion`, `foto_url`, `presentacion`, `precio_comercio`, `precio_sugerido`, `pedido_minimo`, `capacidad_semanal`, `vida_util_dias`, `requiere_refrigeracion` (false por defecto), `conservacion`, `zonas_entrega` (lista de nombres), `frecuencia_entrega` y `documentacion` (lista de descripciones). El pedido y el abastecimiento se expresan en unidades de la presentación comercial. El catálogo público devuelve JSON y deja fuera la documentación, las cuentas y los productos archivados. La ficha PDF se genera sin solicitar imágenes externas.
+
+El filtro de compatibilidad usa categoría, cobertura por cantón/parroquia/sector, recepción, refrigeración y pedido inicial frente al mínimo y la capacidad semanal. Una condición desconocida se señala en `pendientes`. Las coincidencias son oportunidades a evaluar y no garantizan aceptación.
+
+## Oportunidades y propuestas
+
+| Método y ruta bajo `/api` | Acceso | Entrada y salida |
+| --- | --- | --- |
+| GET `/oportunidades` | Emprendedor | `oportunidades` propias |
+| POST `/oportunidades` | Emprendedor | `establecimiento_id`; devuelve `oportunidad` con 201 o 200 si ya estaba guardada |
+| PATCH `/oportunidades/{id}` | Emprendedor propietario | `estado`, `notas`, `proxima_gestion`, `condiciones_acordadas`; devuelve `oportunidad` |
+| GET `/oportunidades/{id}/propuestas` | Emprendedor propietario | `propuestas` enviadas |
+| POST `/establecimientos/{id}/propuestas` | Emprendedor | `productos` (IDs), `mensaje`, `referencia` (UUID opcional para reintentar); devuelve `propuesta` |
+| GET `/propuestas-recibidas` | Comercio | `propuestas` de establecimientos a su cargo |
+| PATCH `/propuestas-recibidas/{id}/respuesta` | Comercio responsable | `respuesta`, `mensaje_respuesta` opcional; devuelve `propuesta` |
+
+Estados del seguimiento en orden comercial: `por_contactar`, `contactado`, `muestra_entregada`, `en_negociacion`, `primer_pedido`, `punto_venta_activo` y `no_concretada`. El emprendedor registra su estado real incluso si el comercio carece de cuenta. El primer pedido registra `primer_pedido_en` para indicadores. Las respuestas son `me_interesa`, `solicito_informacion`, `agendar_visita` y `no_interesado_por_ahora`. La propuesta conserva una copia de los datos comerciales de los productos al enviarla. El comercio recibe la propuesta y el identificador del establecimiento. Las notas y condiciones del seguimiento son privadas.
+
+## Administración e integración de Excel
+
+| Método y ruta bajo `/api/admin` | Entrada y salida |
+| --- | --- |
+| GET `/categorias` | `categorias` activas e inactivas |
+| POST `/categorias`, PATCH `/categorias/{id}` | `nombre`, `activa`; devuelve `categoria` |
+| GET `/usuarios`, GET `/reportes` | `usuarios` o `reportes` paginados, con `data` dentro de esa propiedad |
+| PATCH `/usuarios/{id}` | `rol` y/o `suspendido`; devuelve `usuario` |
+| PATCH `/reportes/{id}` | `estado` (`resuelto` o `descartado`) y `resolucion`; devuelve `reporte` |
+| GET `/indicadores` | `indicadores.emprendedores_con_primer_pedido` y `indicadores.puntos_venta_activos` |
+| POST `/establecimientos/{id}/verificar` | Actualiza la fecha de verificación; devuelve `establecimiento` |
+| PATCH `/establecimientos/{id}/responsable` | `responsable_id` de un comercio activo o `null`; devuelve `responsable_id` |
+| POST `/establecimientos/duplicados` | Recibe una ficha normalizada y devuelve IDs en `candidatos` |
+| POST `/establecimientos/importar` | `filas` normalizadas; devuelve `resultados` |
+
+Brandon puede convertir el Excel en lotes de hasta 100 fichas con el JSON de ejemplo de esta guía. Las categorías deben existir antes de asociarlas. Cada fila admite `interes_encuesta` como booleano o nulo para conservar la respuesta original en privado. Cada resultado incluye `fila` (índice desde cero) y `estado`. Las filas `creado` incluyen `establecimiento_id`; las `posible_duplicado` incluyen `candidatos`; las `invalida` incluyen `errores` y las `reintentar` se pueden reenviar cuando termine otra carga. Las coincidencias por nombre, dirección o teléfono se revisan manualmente. La carga conserva los contactos como privados y asigna `por_confirmar` a la recepción. La lectura del archivo Excel y su mapeo quedan en el importador de Brandon. El Excel real se mantiene fuera de Git.
+
+Para probar las fotos en local, ejecuta `php artisan storage:link` y configura `APP_URL` con el origen de la app. El mapa requiere una clave válida de Google Maps en el entorno de la interfaz. [Autenticación Laravel](https://laravel.com/framework/docs/13.x/authentication) · [Almacenamiento Laravel](https://laravel.com/framework/docs/13.x/filesystem) · [Enlaces de Google Maps](https://developers.google.com/maps/documentation/urls/get-started)
