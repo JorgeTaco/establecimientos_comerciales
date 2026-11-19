@@ -27,6 +27,7 @@
         contadorLinea: document.getElementById('contador-linea'),
         listado: document.getElementById('listado'),
         mas: document.getElementById('mas'),
+        listadoAviso: document.getElementById('listado-aviso'),
         carga: document.getElementById('estado-carga'),
         vacio: document.getElementById('estado-vacio'),
         error: document.getElementById('estado-error'),
@@ -43,6 +44,7 @@
         mapaAvisoTexto: document.getElementById('mapa-aviso-texto'),
         mapaUbicados: document.getElementById('mapa-ubicados'),
         mapaNota: document.getElementById('mapa-nota'),
+        reintentarUbicaciones: document.getElementById('reintentar-ubicaciones'),
         ficha: document.getElementById('ficha'),
         fichaFondo: document.getElementById('ficha-fondo'),
         fichaCerrar: document.getElementById('ficha-cerrar'),
@@ -55,6 +57,10 @@
 
     var estado = {
         totalDirectorio: 0,
+        totalCoincidencias: 0,
+        totalReciben: 0,
+        busqueda: null,
+        siguienteCursor: undefined,
         visibles: [],
         filtros: { texto: '', tipo: '', parroquia: '', categoria: '', estado: '', interes: '', soloUbicados: false, cerca: null },
         orden: 'nombre',
@@ -220,30 +226,41 @@
     async function recargarConFiltros() {
         var consulta = ++estado.consulta;
         var filtros = filtrosParaApi(estado.filtros);
+        var limite = estado.orden === 'nombre' && !estado.filtros.cerca ? POR_PAGINA : undefined;
 
         mostrar(dom.carga);
+        dom.mas.disabled = true;
         ocultar(dom.error);
         ocultar(dom.vacio);
         ocultar(dom.directorioVacio);
 
         try {
-            var respuesta = await datosApi.buscar(config.api, filtros);
+            var respuesta = await datosApi.buscar(config.api, { ...filtros, limite, facetas: 1 });
             if (consulta !== estado.consulta) return;
 
             estado.totalDirectorio = respuesta.totalDirectorio;
+            estado.totalCoincidencias = respuesta.totalCoincidencias;
+            estado.totalReciben = respuesta.totalReciben;
+            estado.siguienteCursor = respuesta.siguienteCursor;
+            estado.busqueda = { filtros, limite, ubicaciones: null, cargandoUbicaciones: false };
             estado.visibles = respuesta.establecimientos;
+            dom.listadoAviso.textContent = '';
+            dom.mas.disabled = false;
             actualizarFacetas(respuesta.facetas);
-            ordenarVisibles();
+            if (estado.siguienteCursor === undefined) ordenarVisibles();
             estado.pagina = 1;
             pintarListado();
             actualizarContadores();
             actualizarPaneles();
             dom.directorioVacio.hidden = estado.totalDirectorio !== 0;
-            dom.vacio.hidden = estado.totalDirectorio === 0 || estado.visibles.length !== 0;
+            dom.vacio.hidden = estado.totalDirectorio === 0 || estado.totalCoincidencias !== 0;
             dom.quitarFiltros.hidden = !hayFiltrosDeResultado();
         } catch (error) {
             if (consulta !== estado.consulta) return;
             estado.visibles = [];
+            estado.totalCoincidencias = 0;
+            estado.siguienteCursor = undefined;
+            estado.busqueda = null;
             pintarListado();
             dom.contador.textContent = '';
             dom.contadorLinea.textContent = '';
@@ -292,7 +309,7 @@
             var valor = chip.dataset.estado;
             if (!valor) return;
             var activo = valor === filtros.estado;
-            var cantidad = recepcion.get(valor) ?? (activo ? estado.visibles.length : 0);
+            var cantidad = recepcion.get(valor) ?? (activo ? estado.totalCoincidencias : 0);
             chip.hidden = !activo && !cantidad;
             chip.querySelector('[data-cantidad]').textContent = ' (' + cantidad + ')';
         });
@@ -306,7 +323,7 @@
         })).filter(opcion => opcion.cantidad > 0 || opcion.valor === seleccion);
 
         if (seleccion && !entradas.some(opcion => opcion.valor === seleccion)) {
-            entradas.push({ valor: seleccion, nombre: alternativa, cantidad: estado.visibles.length });
+            entradas.push({ valor: seleccion, nombre: alternativa, cantidad: estado.totalCoincidencias });
         }
 
         selector.length = 1;
@@ -381,9 +398,7 @@
 
         dom.orden.addEventListener('change', function (evento) {
             estado.orden = evento.target.value;
-            guardarPreferencias();
-            ordenarVisibles();
-            pintarListado();
+            aplicarFiltros();
         });
 
         Array.prototype.forEach.call(dom.chips, function (chip) {
@@ -397,10 +412,8 @@
         dom.limpiar.addEventListener('click', () => limpiarFiltros(false));
         dom.quitarFiltros.addEventListener('click', () => limpiarFiltros(true));
 
-        dom.mas.addEventListener('click', function () {
-            estado.pagina += 1;
-            pintarListado();
-        });
+        dom.mas.addEventListener('click', cargarMas);
+        dom.reintentarUbicaciones.addEventListener('click', cargarUbicaciones);
 
         [dom.botonLista, dom.botonMapa].forEach(function (boton, indice) {
             boton.addEventListener('click', function () {
@@ -417,12 +430,12 @@
             });
         });
         dom.cargarMapa.addEventListener('click', function () {
-            if (estado.mapaIntentado || !estado.visibles.some(function (item) { return item.tieneUbicacion; })) {
+            if (estado.mapaIntentado || !estado.busqueda?.ubicaciones?.length) {
                 return;
             }
             estado.mapaIntentado = true;
             actualizarVistaMapa();
-            iniciarMapa(estado.visibles);
+            iniciarMapa();
         });
 
         // Ficha: cerrar con el botón, el fondo o Escape.
@@ -521,7 +534,7 @@
 
     function actualizarContadores() {
         var total = estado.totalDirectorio;
-        var visibles = estado.visibles.length;
+        var visibles = estado.totalCoincidencias;
         dom.contador.textContent = visibles === total
             ? '(' + total + ')'
             : '(' + visibles + ' de ' + total + ')';
@@ -529,24 +542,43 @@
             dom.contadorLinea.textContent = '';
             return;
         }
-        var reciben = estado.visibles.filter(item => item.estadoClave === 'recibe_propuestas').length;
+        var reciben = estado.totalReciben;
         dom.contadorLinea.textContent = reciben + (reciben === 1 ? ' recibe propuestas' : ' reciben propuestas');
     }
 
     // ------------------------------------------------------------------- tarjetas
 
+    async function cargarMas() {
+        if (estado.siguienteCursor === undefined) {
+            estado.pagina += 1;
+            pintarListado();
+            return;
+        }
+
+        var consulta = estado.consulta;
+        var { filtros, limite } = estado.busqueda;
+        dom.mas.disabled = true;
+        dom.listadoAviso.textContent = '';
+        try {
+            var pagina = await datosApi.buscar(config.api, { ...filtros, limite, cursor: estado.siguienteCursor });
+            if (consulta !== estado.consulta) return;
+            estado.siguienteCursor = pagina.siguienteCursor;
+            estado.visibles.push(...pagina.establecimientos);
+            pintarListado();
+        } catch {
+            if (consulta === estado.consulta) dom.listadoAviso.textContent = 'No se pudo cargar la siguiente página. Vuelve a intentar.';
+        } finally {
+            if (consulta === estado.consulta) dom.mas.disabled = false;
+        }
+    }
+
     function pintarListado() {
-        dom.listado.textContent = '';
+        var paginada = estado.siguienteCursor !== undefined;
+        var visibles = paginada ? estado.visibles : estado.visibles.slice(0, estado.pagina * POR_PAGINA);
 
-        var limite = estado.pagina * POR_PAGINA;
-        var visibles = estado.visibles.slice(0, limite);
-
-        visibles.forEach(function (item) {
-            dom.listado.appendChild(tarjeta(item));
-        });
-
-        dom.mas.hidden = estado.visibles.length <= limite;
-        dom.mas.textContent = 'Mostrar más comercios (' + Math.max(estado.visibles.length - limite, 0) + ')';
+        dom.listado.replaceChildren(...visibles.map(tarjeta));
+        dom.mas.hidden = paginada ? !estado.siguienteCursor : estado.visibles.length <= visibles.length;
+        dom.mas.textContent = 'Mostrar más comercios';
     }
 
     function tarjeta(item) {
@@ -635,44 +667,66 @@
     }
 
     function actualizarPaneles() {
-        var hayResultados = estado.visibles.length > 0;
+        var hayResultados = estado.totalCoincidencias > 0;
         dom.vistaLista.hidden = !hayResultados || estado.vista !== 'lista';
         dom.vistaMapa.hidden = !hayResultados || estado.vista !== 'mapa';
         if (!dom.vistaMapa.hidden) actualizarVistaMapa();
     }
 
+    async function cargarUbicaciones() {
+        var busqueda = estado.busqueda;
+        if (!busqueda || busqueda.cargandoUbicaciones) return;
+
+        busqueda.cargandoUbicaciones = true;
+        ocultar(dom.reintentarUbicaciones);
+        ocultar(dom.cargarMapa);
+        ocultar(dom.mapa);
+        mostrar(dom.mapaAviso);
+        dom.mapaNota.textContent = '';
+        dom.mapaUbicados.replaceChildren();
+        dom.mapaAvisoTexto.textContent = 'Cargando ubicaciones…';
+
+        try {
+            var respuesta = await datosApi.buscar(config.api, { ...busqueda.filtros, modo: 'mapa' });
+            if (estado.busqueda !== busqueda) return;
+            busqueda.ubicaciones = respuesta.establecimientos;
+            actualizarVistaMapa();
+        } catch {
+            if (estado.busqueda !== busqueda) return;
+            dom.mapaAvisoTexto.textContent = 'No se pudieron cargar las ubicaciones.';
+            mostrar(dom.reintentarUbicaciones);
+        } finally {
+            busqueda.cargandoUbicaciones = false;
+        }
+    }
+
     function actualizarVistaMapa() {
-        if (estado.vista !== 'mapa') {
+        if (estado.vista !== 'mapa' || dom.vistaMapa.hidden) return;
+
+        var lista = estado.busqueda.ubicaciones;
+        if (lista === null) {
+            cargarUbicaciones();
             return;
         }
-
-        var ubicados = estado.visibles.some(function (item) { return item.tieneUbicacion; });
-        dom.cargarMapa.hidden = estado.mapaIntentado || !config.googleMapsKey || !ubicados;
-        actualizarNotaMapa(estado.visibles);
-        if (estado.mapaListo && ubicados) {
+        ocultar(dom.reintentarUbicaciones);
+        dom.cargarMapa.hidden = estado.mapaIntentado || !config.googleMapsKey || !lista.length;
+        actualizarNotaMapa(lista);
+        if (estado.mapaListo && lista.length) {
             ocultar(dom.mapaAviso);
             mostrar(dom.mapa);
-            actualizarMarcadores(estado.visibles);
+            actualizarMarcadores(lista);
         } else {
-            renderAvisoMapa(estado.visibles, estado.mapaError ||
+            renderAvisoMapa(lista, estado.mapaError ||
                 (!config.googleMapsKey ? 'sin-clave' : (estado.mapaIntentado ? 'cargando' : 'manual')));
         }
     }
 
-    function iniciarMapa(lista) {
-        actualizarNotaMapa(lista);
-
-        if (!config.googleMapsKey) {
-            estado.mapaError = 'sin-clave';
-            renderAvisoMapa(lista, 'sin-clave');
-            return;
-        }
-
+    function iniciarMapa() {
         // Google llama a esta función cuando la clave no está autorizada.
         window.gm_authFailure = function () {
             estado.mapaListo = false;
             estado.mapaError = 'auth';
-            renderAvisoMapa(estado.visibles, 'auth');
+            actualizarVistaMapa();
         };
 
         cargarGoogleMaps()
@@ -684,7 +738,7 @@
             })
             .catch(function () {
                 estado.mapaError = estado.mapaError || 'fallo';
-                renderAvisoMapa(estado.visibles, estado.mapaError);
+                actualizarVistaMapa();
             });
     }
 
@@ -751,10 +805,10 @@
         var ubicados = lista.filter(function (item) {
             return item.tieneUbicacion;
         });
-        var pendientes = lista.length - ubicados.length;
+        var pendientes = Math.max(0, estado.totalCoincidencias - ubicados.length);
 
         dom.mapaNota.textContent =
-            ubicados.length + ' de ' + lista.length + ' con coordenadas' +
+            ubicados.length + ' de ' + estado.totalCoincidencias + ' con coordenadas' +
             (pendientes
                 ? ' · ' + pendientes + (pendientes === 1 ? ' pendiente' : ' pendientes') + ' de ubicar'
                 : '');

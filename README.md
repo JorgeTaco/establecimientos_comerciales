@@ -21,7 +21,7 @@ La [guía de colaboración](CONTRIBUTING.md) indica qué rama abrir, quién revi
 - **Comercio** puede registrar o actualizar su ficha y responder las propuestas que recibe.
 - **Administrador** puede revisar indicadores, gestionar categorías y usuarios, resolver reportes y simular o importar el Excel de la encuesta.
 
-La [vista previa pública](https://jorgetaco.github.io/establecimientos_comerciales/) muestra fichas ficticias en GitHub Pages. Para probar inicio de sesión y cambios con MySQL, abre **`/evaluacion`** en la instalación del equipo o en una instalación local.
+La [vista previa pública](https://jorgetaco.github.io/establecimientos_comerciales/) permite buscar y filtrar fichas ficticias en GitHub Pages. Para probar inicio de sesión y cambios con MySQL, abre **`/evaluacion`** en la instalación del equipo o en una instalación local.
 
 ## Levantar la aplicación
 

@@ -8,10 +8,13 @@ use App\Models\Establecimiento;
 use App\Models\Oportunidad;
 use App\Models\ReporteEstablecimiento;
 use App\Models\User;
+use App\Support\CacheComercial;
+use App\Support\CursorPaginacion;
 use App\Support\DatosEstablecimiento;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -21,7 +24,10 @@ class AdministracionController
 {
     public function categorias(): JsonResponse
     {
-        return response()->json(['categorias' => Categoria::query()->where('activa', true)->orderBy('nombre')->get(['id', 'nombre'])]);
+        $categorias = Cache::remember(CacheComercial::CATEGORIAS, 60, fn () => Categoria::query()
+            ->where('activa', true)->orderBy('nombre')->get(['id', 'nombre'])->toArray());
+
+        return response()->json(['categorias' => $categorias]);
     }
 
     public function todasCategorias(): JsonResponse
@@ -37,6 +43,10 @@ class AdministracionController
         ]);
         $categoria ??= new Categoria;
         $categoria->fill($datos)->save();
+        DB::afterCommit(function () {
+            Cache::forget(CacheComercial::CATEGORIAS);
+            CacheComercial::invalidarDirectorio();
+        });
 
         return response()->json(['categoria' => $categoria->refresh()->only(['id', 'nombre', 'activa'])], $categoria->wasRecentlyCreated ? 201 : 200);
     }
@@ -52,9 +62,12 @@ class AdministracionController
         return response()->json(['reporte' => $reporte->only(['id', 'establecimiento_id', 'descripcion', 'estado', 'created_at'])], 201);
     }
 
-    public function reportes(): JsonResponse
+    public function reportes(Request $request): JsonResponse
     {
-        return response()->json(['reportes' => ReporteEstablecimiento::query()->latest('id')->paginate(50)]);
+        $consulta = ReporteEstablecimiento::query()->latest('id');
+        $pagina = $request->boolean('por_cursor') ? $consulta->cursorPaginate(50, ['*'], 'cursor', CursorPaginacion::leer($request))->appends(['por_cursor' => 1]) : $consulta->paginate(50);
+
+        return response()->json(['reportes' => $pagina]);
     }
 
     public function resolver(Request $request, ReporteEstablecimiento $reporte): JsonResponse
@@ -101,9 +114,12 @@ class AdministracionController
         return response()->json(['responsable_id' => $perfil->user_id]);
     }
 
-    public function usuarios(): JsonResponse
+    public function usuarios(Request $request): JsonResponse
     {
-        return response()->json(['usuarios' => User::query()->orderBy('id')->paginate(50, ['id', 'name', 'email', 'rol', 'suspendido_en'])]);
+        $consulta = User::query()->select(['id', 'name', 'email', 'rol', 'suspendido_en'])->orderBy('id');
+        $pagina = $request->boolean('por_cursor') ? $consulta->cursorPaginate(50, ['*'], 'cursor', CursorPaginacion::leer($request))->appends(['por_cursor' => 1]) : $consulta->paginate(50);
+
+        return response()->json(['usuarios' => $pagina]);
     }
 
     public function actualizarUsuario(Request $request, User $usuario): JsonResponse
@@ -130,10 +146,12 @@ class AdministracionController
 
     public function indicadores(): JsonResponse
     {
-        return response()->json(['indicadores' => [
+        $indicadores = Cache::remember(CacheComercial::INDICADORES, 60, fn () => [
             'emprendedores_con_primer_pedido' => Oportunidad::query()->whereNotNull('primer_pedido_en')->distinct()->count('user_id'),
             'puntos_venta_activos' => Oportunidad::query()->where('estado', 'punto_venta_activo')->count(),
-        ]]);
+        ]);
+
+        return response()->json(['indicadores' => $indicadores]);
     }
 
     public function importacion(Request $request, DatosEstablecimiento $normalizador): JsonResponse

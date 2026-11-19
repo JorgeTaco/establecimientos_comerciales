@@ -6,22 +6,30 @@ use App\Http\Resources\EstablecimientoResource;
 use App\Models\Categoria;
 use App\Models\Establecimiento;
 use App\Models\Producto;
+use App\Support\CacheComercial;
+use App\Support\CursorPaginacion;
 use App\Support\FlujoComercial;
+use App\Support\RadioGeografico;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class BusquedaEstablecimientoController
 {
+    private const COLUMNAS = ['id', 'nombre', 'tipo', 'parroquia', 'latitud', 'longitud', 'recepcion_proveedores'];
+
     public function buscar(Request $request): JsonResponse
     {
         $publicarInteres = (bool) config('app.publicar_interes_encuesta');
         $filtros = $request->validate([
             'facetas' => ['sometimes', 'boolean'],
+            'limite' => ['sometimes', 'integer', 'between:1,50'],
+            'modo' => ['sometimes', Rule::in(['mapa'])],
             'ubicados' => ['sometimes', 'boolean'],
             'q' => ['nullable', 'string', 'max:100'],
             'canton' => ['nullable', 'string', 'max:100'],
@@ -36,7 +44,61 @@ class BusquedaEstablecimientoController
             'distancia_km' => ['nullable', 'numeric', 'gt:0', 'max:500'],
         ]);
 
-        $base = Establecimiento::query()->orderBy('nombre')->orderBy('id')
+        $cacheable = ! empty($filtros['facetas']) && (int) ($filtros['limite'] ?? 0) === 24
+            && $request->query('cursor') === null && Arr::except($filtros, ['limite', 'facetas']) === [];
+        $calcular = fn () => $this->consultar($request, $filtros, $publicarInteres);
+
+        return response()->json($cacheable
+            ? Cache::remember(CacheComercial::clavePortada($publicarInteres), 60, $calcular)
+            : $calcular());
+    }
+
+    private function consultar(Request $request, array $filtros, bool $publicarInteres): array
+    {
+        $base = $this->consultaBase($filtros);
+        $consulta = $this->filtrarOpciones(clone $base, $filtros);
+        $mapa = ($filtros['modo'] ?? null) === 'mapa';
+        $conOrigen = isset($filtros['latitud'], $filtros['longitud']);
+        $paginada = isset($filtros['limite']) && ! $mapa && ! $conOrigen;
+        $respuesta = [];
+
+        if ($paginada) {
+            $pagina = (clone $consulta)->with('perfilComercial')->orderBy('nombre')->orderBy('id')
+                ->cursorPaginate((int) $filtros['limite'], self::COLUMNAS, 'cursor', CursorPaginacion::leer($request, porNombre: true));
+            $comercios = $pagina->getCollection();
+            $respuesta['siguienteCursor'] = $pagina->nextCursor()?->encode();
+        } else {
+            $filas = (clone $consulta)->orderBy('nombre')->orderBy('id');
+            if ($mapa) {
+                $filas->whereNotNull('latitud')->whereNotNull('longitud');
+            } else {
+                $filas->with('perfilComercial');
+            }
+            $comercios = $this->dentroDelRadio($filas->get(self::COLUMNAS), $filtros);
+        }
+
+        $resultados = $comercios->map(fn (Establecimiento $comercio) => $this->fila($request, $comercio, $filtros, $publicarInteres, $mapa));
+        if ($conOrigen && ! $mapa) {
+            $resultados = $resultados->sortBy(fn (array $fila) => $fila['distanciaKm'] ?? INF);
+        }
+        $respuesta['establecimientos'] = $resultados->values()->all();
+
+        if (! empty($filtros['facetas'])) {
+            $coincidencias = $paginada || $mapa
+                ? $this->dentroDelRadio($consulta->get(self::COLUMNAS), $filtros)
+                : $comercios;
+            $respuesta['facetas'] = $this->facetas($base, $filtros, $coincidencias, $publicarInteres);
+            $respuesta['totalDirectorio'] = Establecimiento::query()->count();
+            $respuesta['totalCoincidencias'] = $coincidencias->count();
+            $respuesta['totalReciben'] = $coincidencias->where('recepcion_proveedores', 'recibe_propuestas')->count();
+        }
+
+        return $respuesta;
+    }
+
+    private function consultaBase(array $filtros): Builder
+    {
+        $base = Establecimiento::query()
             ->when($filtros['q'] ?? null, function ($q, $texto) {
                 $patron = '%'.$texto.'%';
                 $q->where(fn ($query) => $query->whereLike('nombre', $patron)
@@ -49,37 +111,32 @@ class BusquedaEstablecimientoController
                 ->orWhereHas('perfilComercial', fn ($perfil) => $perfil->where('sector', $sector))))
             ->when(! empty($filtros['ubicados']) || isset($filtros['distancia_km']),
                 fn ($q) => $q->whereNotNull('latitud')->whereNotNull('longitud'));
+        if (isset($filtros['distancia_km'])) {
+            RadioGeografico::limitarCandidatos($base, $filtros['latitud'], $filtros['longitud'], $filtros['distancia_km']);
+        }
 
-        $coincidencias = $this->dentroDelRadio(
-            $this->filtrarOpciones(clone $base, $filtros)->with('perfilComercial')->get(),
-            $filtros
-        );
-        $resultados = $coincidencias->map(function (Establecimiento $comercio) use ($filtros, $publicarInteres, $request) {
-            $perfil = $comercio->perfilComercial;
-            $fila = (new EstablecimientoResource($comercio))->toArray($request) + [
-                'direccion' => $perfil?->direccion,
-                'sector' => $perfil?->sector,
-                'foto_url' => $perfil?->foto_url,
-                'distanciaKm' => $this->distancia($comercio, $filtros),
-            ];
-            if ($publicarInteres) {
-                $fila['interesDeclarado'] = $perfil?->interes_encuesta;
-            }
+        return $base;
+    }
 
+    private function fila(Request $request, Establecimiento $comercio, array $filtros, bool $publicarInteres, bool $mapa): array
+    {
+        $fila = (new EstablecimientoResource($comercio))->toArray($request);
+        if ($mapa) {
             return $fila;
-        });
-
-        if (isset($filtros['latitud'], $filtros['longitud'])) {
-            $resultados = $resultados->sortBy(fn (array $fila) => $fila['distanciaKm'] ?? INF);
         }
 
-        $respuesta = ['establecimientos' => $resultados->values()];
-        if (! empty($filtros['facetas'])) {
-            $respuesta['facetas'] = $this->facetas($base, $filtros, $coincidencias, $publicarInteres);
-            $respuesta['totalDirectorio'] = Establecimiento::query()->count();
+        $perfil = $comercio->perfilComercial;
+        $fila += [
+            'direccion' => $perfil?->direccion,
+            'sector' => $perfil?->sector,
+            'foto_url' => $perfil?->foto_url,
+            'distanciaKm' => $this->distancia($comercio, $filtros),
+        ];
+        if ($publicarInteres) {
+            $fila['interesDeclarado'] = $perfil?->interes_encuesta;
         }
 
-        return response()->json($respuesta);
+        return $fila;
     }
 
     private function filtrarOpciones(Builder $consulta, array $filtros): Builder
@@ -122,7 +179,7 @@ class BusquedaEstablecimientoController
         foreach ($campos as $clave => $campo) {
             // Con un filtro activo, las alternativas de esa faceta se cuentan sin ese filtro.
             $candidatos = isset($filtros[$clave])
-                ? $this->dentroDelRadio($this->filtrarOpciones(clone $base, Arr::except($filtros, [$clave]))->get(), $filtros)
+                ? $this->dentroDelRadio($this->filtrarOpciones(clone $base, Arr::except($filtros, [$clave]))->orderBy('nombre')->orderBy('id')->get(self::COLUMNAS), $filtros)
                 : $coincidencias;
 
             if ($clave === 'categoria_id') {
@@ -136,7 +193,7 @@ class BusquedaEstablecimientoController
                     ->where($campo, '<>', '')
                     ->select($campo)->selectRaw('count(*) as cantidad')->groupBy($campo)->get()
                     ->map(fn (Establecimiento $grupo) => ['valor' => $grupo->{$campo}, 'cantidad' => (int) $grupo->cantidad])
-                    ->values();
+                    ->values()->all();
 
                 continue;
             }
@@ -148,7 +205,7 @@ class BusquedaEstablecimientoController
                 ->filter(fn ($valor) => $valor !== null && $valor !== '')
                 ->countBy(fn ($valor) => is_bool($valor) ? (int) $valor : $valor)
                 ->map(fn (int $cantidad, string|int $valor) => ['valor' => (string) $valor, 'cantidad' => $cantidad])
-                ->values();
+                ->values()->all();
         }
 
         return $facetas;
@@ -244,6 +301,6 @@ class BusquedaEstablecimientoController
         $longitud = deg2rad($comercio->longitud - $filtros['longitud']);
         $a = sin(($destino - $latitud) / 2) ** 2 + cos($latitud) * cos($destino) * sin($longitud / 2) ** 2;
 
-        return 6371.0088 * 2 * asin(sqrt(min(1, $a)));
+        return RadioGeografico::RADIO_TERRESTRE_KM * 2 * asin(sqrt(min(1, $a)));
     }
 }

@@ -166,6 +166,7 @@
         <div id="vista-lista" role="tabpanel" aria-labelledby="boton-lista">
             <ul class="listado" id="listado"></ul>
 
+            <p class="mensaje" id="listado-aviso" role="status"></p>
             <div class="listado__pie">
                 <button type="button" class="boton boton--secundario" id="mas" hidden>Mostrar más comercios</button>
             </div>
@@ -182,6 +183,7 @@
 
             <div id="mapa-aviso" class="mapa__aviso">
                 <p id="mapa-aviso-texto" role="status">Preparando las coordenadas…</p>
+                <button type="button" class="boton boton--secundario" id="reintentar-ubicaciones" hidden>Reintentar ubicaciones</button>
                 <ul id="mapa-ubicados" class="mapa__lista"></ul>
             </div>
         </section>
