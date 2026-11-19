@@ -6,6 +6,8 @@ El docente debe poder abrir el enlace de entrega desde el celular, iniciar sesi�
 
 Laravel ya registra cuentas de emprendedor o comercio, inicia y cierra sesión, devuelve el usuario actual y aplica permisos. La tabla `users` contiene correo único, contraseña con hash, rol y estado de suspensión. La tabla `sessions` permite persistir la sesión en MySQL. El trabajo inicial consiste en conectar las pantallas móviles a esa base y preparar una cuenta reproducible para la evaluación. [Contrato de sesión](backend.md#sesión-para-blade-o-javascript-del-mismo-origen)
 
+La ruta `/iniciar-sesion` incluye un formulario Blade base para probar el flujo. Michelle puede adaptar esa vista y consultar `GET /api/sesion/contexto` para obtener el usuario, el token, los roles de registro y el destino en una sola respuesta. [Cómo conectar la pantalla](backend.md#conectar-la-pantalla-de-acceso)
+
 En una base temporal de MySQL 8.4 se probó el registro, la entrada con credenciales válidas e inválidas, la salida, la rotación de CSRF y el acceso restringido por rol mediante peticiones HTTP con cookies. La prueba usó una cuenta desechable.
 
 ## Responsables y orden
@@ -23,8 +25,8 @@ Cada cambio sale del último `main`. Se pueden usar `jorge/acceso-web` para el c
 ## Frontend de Michelle
 
 1. Crear la vista Blade móvil de **Iniciar sesión** y enlazarla desde el listado. Usar campos etiquetados de correo y contraseña, permitir autocompletado de credenciales y mostrar el estado del envío.
-2. Conservar la cookie del mismo sitio. Obtener el token con `GET /api/sesion/csrf` o desde Blade y enviar `POST /api/sesion` con el encabezado `X-CSRF-TOKEN`. Reemplazarlo por el token de la respuesta exitosa.
-3. Tras iniciar sesión, enviar al usuario a `/establecimientos`, que ya existe. Añadir enlaces a las áreas de emprendedor, comercio y administración a medida que sus pantallas estén disponibles. Al recargar, consultar `GET /api/sesion` para recuperar el usuario y su rol.
+2. Conservar la cookie del mismo sitio. Obtener el token con `GET /api/sesion/contexto` o desde Blade y enviar `POST /api/sesion` con el encabezado `X-CSRF-TOKEN`. Reemplazarlo por el token de la respuesta exitosa.
+3. Tras iniciar sesión, enviar al usuario a `/establecimientos`. Añadir enlaces a las áreas de emprendedor, comercio y administración a medida que sus pantallas estén disponibles. Al recargar, consultar `GET /api/sesion/contexto` para recuperar el usuario y su rol.
 4. Implementar **Cerrar sesión** con `DELETE /api/sesion`. Después de recibir `204`, limpiar el estado de usuario de la interfaz y volver a la pantalla de entrada. Si hay otra escritura posterior, obtener un token nuevo.
 5. Conectar el registro de emprendedor y comercio después de verificar entrada y salida. Mostrar errores junto a sus campos y explicar cómo volver a entrar si la sesión vence.
 

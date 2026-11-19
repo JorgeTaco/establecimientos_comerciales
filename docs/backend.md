@@ -10,6 +10,7 @@ Para peticiones autenticadas, conserva la cookie de sesión. Envía `Accept: app
 
 | Método y ruta bajo `/api` | Entrada | Salida |
 | --- | --- | --- |
+| GET `/sesion/contexto` | Cookie del sitio, si existe | `usuario` o `null`, `csrf_token`, `roles_registro` y `destino` |
 | GET `/sesion/csrf` | — | `csrf_token` |
 | POST `/registro` | `name`, `email`, `password`, `password_confirmation`, `rol` | 201 con `usuario` y `csrf_token` |
 | POST `/sesion` | `email`, `password` | `usuario` y `csrf_token` |
@@ -19,6 +20,27 @@ Para peticiones autenticadas, conserva la cookie de sesión. Envía `Accept: app
 `usuario` contiene `id`, `name`, `email` y `rol`. El registro público permite `emprendedor` y `comercio`; la contraseña requiere al menos 12 caracteres y hasta 72 bytes. El rol `administrador` se asigna a una cuenta activa con `php artisan usuario:administrador correo@ejemplo.test`. Un administrador puede suspender otras cuentas y cambiar sus roles entre comercio y emprendedor.
 
 Códigos habituales: 401 sin sesión, 403 por rol o suspensión, 404 cuando no existe o la cuenta no es propietaria, 409 por conflicto, 419 por CSRF vencido, 422 con `message` y `errors` para validación y 429 al superar el límite.
+
+### Conectar la pantalla de acceso
+
+Consulta `GET /api/sesion/contexto` al abrir la interfaz. Una sola respuesta permite saber si hay sesión, obtener el token y rellenar las opciones de registro. Un invitado recibe esta estructura:
+
+```json
+{
+  "usuario": null,
+  "csrf_token": "<token-de-la-sesion>",
+  "roles_registro": ["emprendedor", "comercio"],
+  "destino": "/iniciar-sesion"
+}
+```
+
+Con la cuenta activa, `usuario` contiene `id`, `name`, `email` y `rol`, y `destino` es `/establecimientos`. Una cuenta suspendida recibe `403`. Conserva la cookie del mismo origen en cada solicitud. Para salir de una cuenta suspendida, obtén un token desde `/api/sesion/csrf` y usa la ruta de salida.
+
+1. **Entrar.** Envía `email` y `password` a `POST /api/sesion` con JSON y `X-CSRF-TOKEN`. Tras un `200`, guarda el `csrf_token` nuevo en memoria y abre `/establecimientos`. Muestra el mensaje de `errors.email` si las credenciales fallan.
+2. **Registrar.** Envía los campos de la tabla a `POST /api/registro`. Usa `roles_registro` para el selector y el token nuevo después de un `201`.
+3. **Salir.** Envía `DELETE /api/sesion` con el token vigente. Después del `204`, consulta el contexto de nuevo para obtener el estado de invitado y su token.
+
+Para probar la entrada desde un navegador ya existe una vista base en `GET /iniciar-sesion`. Blade puede usar el formulario `POST /iniciar-sesion` con `@csrf` y el formulario de salida `POST /cerrar-sesion` con el token. La entrada redirige a `/establecimientos` y la salida regresa a la pantalla de entrada. Web y API comparten el límite de 10 intentos de entrada por minuto por IP.
 
 ## Directorio y ficha comercial
 
