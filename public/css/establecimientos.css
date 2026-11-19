@@ -579,12 +579,6 @@ select {
     list-style: none;
 }
 
-@media (min-width: 52rem) {
-    .listado {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
 .tarjeta {
     position: relative;
     display: flex;
@@ -849,7 +843,15 @@ select {
 /* ----------------------------------------------------------------------- mapa */
 
 .mapa {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
     margin-top: 1.1rem;
+}
+
+.mapa > .boton {
+    align-self: flex-start;
+    margin-bottom: 0.7rem;
 }
 
 .seccion__cabecera {
@@ -861,17 +863,12 @@ select {
 }
 
 .mapa__lienzo {
-    height: 20rem;
+    flex: 1;
+    min-height: 18rem;
     border: 1px solid var(--borde);
     border-radius: var(--radio);
     overflow: hidden;
     background: var(--superficie-suave);
-}
-
-@media (min-width: 48rem) {
-    .mapa__lienzo {
-        height: 26rem;
-    }
 }
 
 .mapa__aviso {
@@ -890,12 +887,6 @@ select {
     margin: 0.8rem 0 0;
     padding: 0;
     list-style: none;
-}
-
-@media (min-width: 40rem) {
-    .mapa__lista {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 
 .mapa__fila {
@@ -1253,13 +1244,44 @@ a.ficha__valor:hover {
     }
 }
 
-/* Directorio activo de Laravel */
-.cabecera--directorio {
-    padding: 0.65rem 0;
+.directorio {
+    --ancho: none;
+    --margen-directorio: clamp(1rem, 2vw, 2.5rem);
+
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
-.cabecera--directorio .barra {
-    padding: 0 1rem;
+.directorio > .cabecera,
+.directorio > .contenido,
+.directorio > .pie {
+    padding-inline: var(--margen-directorio);
+}
+
+.directorio > .contenido {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.directorio > .pie {
+    margin-top: 0;
+    padding-block: 1rem;
+}
+
+.directorio .heroe {
+    max-width: none;
+}
+
+.directorio .listado,
+.directorio .mapa__lista {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.cabecera--directorio {
+    padding-block: 0.65rem;
 }
 
 .entrada-directorio {
@@ -1319,12 +1341,6 @@ a.ficha__valor:hover {
     min-height: 2.75rem;
     padding: 0.35rem 0.7rem;
     font-size: 0.82rem;
-}
-
-@media (min-width: 72rem) {
-    .cabecera--directorio .barra {
-        padding-inline: 1.5rem;
-    }
 }
 
 .mapa__ficha-marcador {
