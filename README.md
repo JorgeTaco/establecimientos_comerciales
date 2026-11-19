@@ -55,6 +55,8 @@ Instala PHP **8.3 o superior**, Composer y MySQL. PHP necesita las [extensiones 
 
 5. Abre [la entrada de evaluación local](http://127.0.0.1:8000/evaluacion) y comprueba el acceso en una ventana privada. En el celular conectado a la misma red, ejecuta `php artisan serve --host=0.0.0.0 --port=8000`, ajusta `APP_URL=http://IP-DEL-EQUIPO:8000` y abre `http://IP-DEL-EQUIPO:8000/evaluacion`. Si el celular no conecta, verifica la IP vigente, el puerto 8000 en el cortafuegos y que el Wi-Fi permita comunicación entre dispositivos.
 
+Abre [el directorio local](http://127.0.0.1:8000/establecimientos) para buscar fichas y cambiar entre lista y mapa. La ruta `/api/establecimientos/buscar` entrega el JSON que consume la interfaz.
+
 ### Entrega al docente
 
 Para acceso desde fuera de la red local, instala Laravel en un servidor con PHP y MySQL. Configura HTTPS y dirige la raíz del sitio a `public/`. Ajusta `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` con el dominio final, `SESSION_DRIVER=database` y `SESSION_SECURE_COOKIE=true`. Conserva la misma `APP_KEY` al actualizar y usa `php artisan migrate --force` en los despliegues.

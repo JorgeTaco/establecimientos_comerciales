@@ -14,9 +14,11 @@ Blade sirve las pantallas y el JavaScript consume la [API de Laravel](backend.md
 | `/comercio/establecimientos`, `/propuestas-recibidas` | Comercio | Fichas propias y respuesta a propuestas de los comercios a cargo. |
 | `/admin/indicadores` | Administrador | Indicadores, categorías, usuarios, reportes e importación. |
 
-Cuando el directorio todavía está vacío o la API falla, la interfaz señala que está usando el JSON ficticio. Una búsqueda sin coincidencias en la API muestra un resultado vacío. Las fichas ficticias sirven para explorar el directorio. Para guardar oportunidades usa los comercios de la base que carga `php artisan db:seed`.
+El directorio distingue una base sin comercios, una búsqueda sin coincidencias y un fallo de carga. **Reintentar** consulta la API con los filtros actuales. La vista previa de GitHub Pages utiliza sus propios datos ficticios. Para probar el flujo completo con MySQL, carga los comercios de ejemplo con `php artisan db:seed`.
 
-La pestaña **Mapa** lista los comercios con coordenadas. **Mostrar mapa** solicita Google Maps una vez por página. El listado y las coordenadas quedan disponibles con la clave vacía. Para buscar por radio desde HTTP en la red local, introduce las coordenadas de origen. **Usar mi ubicación** requiere permiso del navegador y un origen seguro.
+La búsqueda, los filtros generales, el orden y la vista seleccionada se conservan en la URL. La ubicación de origen de una búsqueda por radio permanece en el historial de la pestaña. En la red local por HTTP se admiten coordenadas manuales. **Usar mi ubicación** requiere permiso y un origen seguro.
+
+Desde **Mapa** puedes abrir una ficha o consultar **Cómo llegar** para cada comercio con coordenadas. **Mostrar mapa** carga Google Maps bajo demanda. También puedes cambiar entre **Lista** y **Mapa** con las flechas del teclado.
 
 Para preparar un catálogo ficticio opcional, crea `emprendedor@ejemplo.test` mediante `php artisan usuario:crear` y ejecuta `php artisan db:seed --class=UsuarioProductoSeeder` después de cargar los comercios de ejemplo.
 

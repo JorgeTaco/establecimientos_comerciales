@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/navegacion.css') }}">
     <style>
         :root {
             --fondo: #fbf7ef;
@@ -183,13 +184,6 @@
             border-radius: 10px;
             box-shadow: 0 6px 14px -8px rgba(20, 80, 52, 0.9);
         }
-        .navegacion a {
-            font-size: 0.9rem;
-            color: var(--tinta-suave);
-            margin-left: 1.25rem;
-            font-weight: 500;
-        }
-        .navegacion a:hover { color: var(--verde); }
         .pagina {
             min-height: 100vh;
             display: flex;
@@ -209,8 +203,6 @@
         @media (max-width: 40rem) {
             .tarjeta { padding: 1.25rem; border-radius: var(--radio-chico); }
             .encabezado { flex-direction: column; gap: 1rem; align-items: flex-start; }
-            .navegacion { margin-top: 0.5rem; flex-wrap: wrap; gap: 0.75rem; }
-            .navegacion a { margin-left: 0; margin-right: 1rem; }
         }
     </style>
     @stack('styles')
@@ -219,15 +211,7 @@
     <header class="cabecera">
         <div class="contenedor">
             <div class="encabezado">
-                <a class="marca" href="{{ route('establecimientos.index') }}">
-                    <span class="marca__icono" aria-hidden="true">
-                        <svg viewBox="0 0 32 32" role="img" focusable="false">
-                            <path d="M16 3c-3.6 5.2-7 9.4-7 14a7 7 0 0 0 14 0c0-4.6-3.4-8.8-7-14Z" fill="currentColor"/>
-                            <path d="M12.6 17.5c.2 2.3 1.5 3.9 3.6 4.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".75"/>
-                        </svg>
-                    </span>
-                    <span>Establecimientos</span>
-                </a>
+                <x-marca />
                 <x-menu-cuenta />
             </div>
         </div>
