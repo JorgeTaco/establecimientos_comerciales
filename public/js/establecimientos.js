@@ -21,6 +21,7 @@
         ubicados: document.getElementById('filtro-ubicados'),
         chips: document.querySelectorAll('.chip[data-estado]'),
         limpiar: document.getElementById('limpiar'),
+        quitarFiltros: document.getElementById('quitar-filtros'),
         orden: document.getElementById('orden'),
         contador: document.getElementById('contador'),
         contadorLinea: document.getElementById('contador-linea'),
@@ -53,7 +54,7 @@
     };
 
     var estado = {
-        todos: null,
+        totalDirectorio: 0,
         visibles: [],
         filtros: { texto: '', tipo: '', parroquia: '', categoria: '', estado: '', interes: '', soloUbicados: false, cerca: null },
         orden: 'nombre',
@@ -127,30 +128,7 @@
         conectarEventos();
         marcarChipActivo();
         activarVista(estado.vista);
-        cargarCategorias();
         aplicarFiltros();
-    }
-
-    async function cargarCategorias() {
-        try {
-            var respuesta = await fetch(config.categorias, { headers: { Accept: 'application/json' } });
-            if (!respuesta.ok) throw new Error('Categorías no disponibles');
-            var datos = await respuesta.json();
-            dom.categoria.length = 1;
-            dom.categoria.options[0].text = 'Todas';
-            datos.categorias.forEach(function (categoria) {
-                dom.categoria.append(opcion(String(categoria.id), categoria.nombre));
-            });
-            dom.categoria.disabled = false;
-            dom.categoria.value = estado.filtros.categoria;
-            if (estado.filtros.categoria && !dom.categoria.value) {
-                dom.categoria.append(opcion(estado.filtros.categoria, 'Categoría no disponible'));
-                dom.categoria.value = estado.filtros.categoria;
-            }
-        } catch {
-            dom.categoria.options[0].text = 'Categorías no disponibles';
-            dom.categoria.disabled = true;
-        }
     }
 
     function leerPreferencias() {
@@ -227,6 +205,9 @@
         if (f.cerca) {
             Object.assign(api, f.cerca);
         }
+        if (f.soloUbicados) {
+            api.ubicados = 1;
+        }
         if (f.estado) {
             api.recepcionProveedores = f.estado;
         }
@@ -239,7 +220,6 @@
     async function recargarConFiltros() {
         var consulta = ++estado.consulta;
         var filtros = filtrosParaApi(estado.filtros);
-        var tieneFiltrosRemotos = Object.keys(filtros).length > 0;
 
         mostrar(dom.carga);
         ocultar(dom.error);
@@ -247,30 +227,20 @@
         ocultar(dom.directorioVacio);
 
         try {
-            // El listado completo también aporta las opciones de tipo y parroquia.
-            var base = estado.todos;
-            if (!base?.length || !tieneFiltrosRemotos) {
-                base = await datosApi.buscar(config.api, {});
-                if (consulta !== estado.consulta) return;
-                estado.todos = base;
-                llenarSelectores(base);
-            }
-
-            var lista = tieneFiltrosRemotos && base.length
-                ? await datosApi.buscar(config.api, filtros)
-                : base;
+            var respuesta = await datosApi.buscar(config.api, filtros);
             if (consulta !== estado.consulta) return;
 
-            estado.visibles = estado.filtros.soloUbicados
-                ? lista.filter(item => item.tieneUbicacion)
-                : lista.slice();
+            estado.totalDirectorio = respuesta.totalDirectorio;
+            estado.visibles = respuesta.establecimientos;
+            actualizarFacetas(respuesta.facetas);
             ordenarVisibles();
             estado.pagina = 1;
             pintarListado();
             actualizarContadores();
             actualizarPaneles();
-            dom.directorioVacio.hidden = base.length !== 0;
-            dom.vacio.hidden = base.length === 0 || estado.visibles.length !== 0;
+            dom.directorioVacio.hidden = estado.totalDirectorio !== 0;
+            dom.vacio.hidden = estado.totalDirectorio === 0 || estado.visibles.length !== 0;
+            dom.quitarFiltros.hidden = !hayFiltrosDeResultado();
         } catch (error) {
             if (consulta !== estado.consulta) return;
             estado.visibles = [];
@@ -305,45 +275,52 @@
 
     // -------------------------------------------------------------- filtros/UI
 
-    function llenarSelectores(lista) {
-        var tipos = new Map();
-        var parroquias = new Set();
-        dom.tipo.length = 1;
-        dom.parroquia.length = 1;
+    function actualizarFacetas(facetas) {
+        var filtros = estado.filtros;
+        var tipoEtiqueta = opcion => datosApi.etiquetaTipo(opcion.valor);
+        var interesEtiqueta = opcion => opcion.valor === '1' ? 'Sí' : 'No';
 
-        lista.forEach(function (item) {
-            if (item.tipo) {
-                tipos.set(item.tipo, item.tipoEtiqueta);
-            }
-            if (item.parroquia) {
-                parroquias.add(item.parroquia);
-            }
-        });
-
-        if (estado.filtros.tipo && !tipos.has(estado.filtros.tipo)) {
-            tipos.set(estado.filtros.tipo, estado.filtros.tipo);
+        mostrarOpciones(dom.tipo, facetas.tipo, filtros.tipo, tipoEtiqueta, tipoEtiqueta({ valor: filtros.tipo }));
+        mostrarOpciones(dom.parroquia, facetas.parroquia, filtros.parroquia, opcion => opcion.valor, filtros.parroquia);
+        mostrarOpciones(dom.categoria, facetas.categoria_id, filtros.categoria, opcion => opcion.nombre, 'Categoría seleccionada');
+        if (dom.interes) {
+            mostrarOpciones(dom.interes, facetas.interes_declarado, filtros.interes, interesEtiqueta, interesEtiqueta({ valor: filtros.interes }));
         }
-        if (estado.filtros.parroquia) parroquias.add(estado.filtros.parroquia);
-        Array.from(tipos)
-            .sort((a, b) => a[1].localeCompare(b[1], 'es'))
-            .forEach(([valor, etiqueta]) => dom.tipo.append(opcion(valor, etiqueta)));
-        Array.from(parroquias)
-            .sort((a, b) => a.localeCompare(b, 'es'))
-            .forEach(valor => dom.parroquia.append(opcion(valor, valor)));
-        dom.tipo.value = estado.filtros.tipo;
-        dom.parroquia.value = estado.filtros.parroquia;
+
+        var recepcion = new Map(facetas.recepcionProveedores.map(opcion => [opcion.valor, opcion.cantidad]));
+        dom.chips.forEach(function (chip) {
+            var valor = chip.dataset.estado;
+            if (!valor) return;
+            var activo = valor === filtros.estado;
+            var cantidad = recepcion.get(valor) ?? (activo ? estado.visibles.length : 0);
+            chip.hidden = !activo && !cantidad;
+            chip.querySelector('[data-cantidad]').textContent = ' (' + cantidad + ')';
+        });
     }
 
-    function opcion(valor, etiqueta) {
-        var nodo = document.createElement('option');
-        nodo.value = valor;
-        nodo.textContent = etiqueta;
-        return nodo;
+    function mostrarOpciones(selector, opciones, seleccion, etiqueta, alternativa) {
+        var entradas = opciones.map(opcion => ({
+            valor: opcion.valor,
+            nombre: etiqueta(opcion),
+            cantidad: opcion.cantidad
+        })).filter(opcion => opcion.cantidad > 0 || opcion.valor === seleccion);
+
+        if (seleccion && !entradas.some(opcion => opcion.valor === seleccion)) {
+            entradas.push({ valor: seleccion, nombre: alternativa, cantidad: estado.visibles.length });
+        }
+
+        selector.length = 1;
+        entradas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).forEach(function (opcion) {
+            selector.add(new Option(opcion.nombre + ' (' + opcion.cantidad + ')', opcion.valor));
+        });
+        selector.value = seleccion;
+        selector.disabled = entradas.length === 0;
     }
 
     function conectarEventos() {
         dom.buscar.addEventListener('input', function () {
             estado.filtros.texto = dom.buscar.value.slice(0, dom.buscar.maxLength);
+            estado.consulta += 1;
             window.clearTimeout(estado.temporizadorBusqueda);
             estado.temporizadorBusqueda = window.setTimeout(aplicarFiltros, 180);
         });
@@ -353,10 +330,7 @@
             aplicarFiltros();
         });
 
-        dom.reintentar.addEventListener('click', function () {
-            if (dom.categoria.disabled) cargarCategorias();
-            aplicarFiltros();
-        });
+        dom.reintentar.addEventListener('click', aplicarFiltros);
 
         dom.tipo.addEventListener('change', function (evento) {
             estado.filtros.tipo = evento.target.value;
@@ -420,7 +394,8 @@
             });
         });
 
-        dom.limpiar.addEventListener('click', limpiarFiltros);
+        dom.limpiar.addEventListener('click', () => limpiarFiltros(false));
+        dom.quitarFiltros.addEventListener('click', () => limpiarFiltros(true));
 
         dom.mas.addEventListener('click', function () {
             estado.pagina += 1;
@@ -465,15 +440,18 @@
         });
     }
 
-    function limpiarFiltros() {
-        estado.filtros = { texto: '', tipo: '', parroquia: '', categoria: '', estado: '', interes: '', soloUbicados: false, cerca: null };
-        dom.buscar.value = '';
+    function limpiarFiltros(conservarBusqueda) {
+        var texto = conservarBusqueda ? estado.filtros.texto : '';
+        estado.filtros = { texto: texto, tipo: '', parroquia: '', categoria: '', estado: '', interes: '', soloUbicados: false, cerca: null };
+        dom.buscar.value = texto;
         dom.tipo.value = '';
         dom.parroquia.value = '';
         dom.categoria.value = '';
         dom.buscarCerca.reset();
         dom.ubicacionAviso.textContent = '';
-        dom.orden.value = estado.orden = 'nombre';
+        if (!conservarBusqueda || estado.orden === 'distancia') {
+            dom.orden.value = estado.orden = 'nombre';
+        }
         dom.ubicados.checked = false;
         if (dom.interes) {
             dom.interes.value = '';
@@ -492,8 +470,12 @@
     }
 
     function hayFiltros() {
+        return Boolean(estado.filtros.texto.trim()) || hayFiltrosDeResultado();
+    }
+
+    function hayFiltrosDeResultado() {
         var f = estado.filtros;
-        return Boolean(f.texto.trim() || f.tipo || f.parroquia || f.categoria || f.estado || f.interes || f.soloUbicados || f.cerca);
+        return Boolean(f.tipo || f.parroquia || f.categoria || f.estado || f.interes || f.soloUbicados || f.cerca);
     }
 
     function aplicarFiltros() {
@@ -538,7 +520,7 @@
     }
 
     function actualizarContadores() {
-        var total = estado.todos.length;
+        var total = estado.totalDirectorio;
         var visibles = estado.visibles.length;
         dom.contador.textContent = visibles === total
             ? '(' + total + ')'
