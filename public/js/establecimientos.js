@@ -312,7 +312,9 @@
 
         dom.mapaNota.textContent =
             ubicados.length + ' de ' + lista.length + ' comercios tienen coordenadas' +
-            (pendientes ? ' · ' + pendientes + ' pendiente(s) de ubicar' : '');
+            (pendientes
+                ? ' · ' + pendientes + (pendientes === 1 ? ' pendiente' : ' pendientes') + ' de ubicar'
+                : '');
 
         if (!config.googleMapsKey) {
             avisoMapa(
