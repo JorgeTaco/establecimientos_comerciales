@@ -4,7 +4,7 @@ La rama `jorge/integracion-piloto` reúne el backend de `main`, el [importador d
 
 ## Entorno compartido
 
-Usen Laravel y Blade en el mismo origen. Cada integrante debe apuntar su `.env` a su propia base MySQL de desarrollo. Sigan la [instalación del README](../README.md#levantar-el-proyecto-en-local) y luego ejecuten en esa base:
+Usen Laravel y Blade en el mismo origen. Cada integrante debe apuntar su `.env` a su propia base MySQL de desarrollo. Sigan la [instalación del README](../README.md#levantar-la-aplicación) y luego ejecuten en esa base:
 
 ```bash
 php artisan migrate
@@ -16,7 +16,9 @@ php artisan serve
 
 ## Michelle: listado, mapa y flujos con sesión
 
-| Para implementar | Consumir del backend |
+Consulta las [pantallas integradas y sus permisos](frontend.md).
+
+| Pantalla | Contrato del backend |
 | --- | --- |
 | Tarjetas y mapa | `GET /api/establecimientos/buscar`. Usa la misma respuesta para ambas vistas, con marcadores para registros con las dos coordenadas. El listado conserva comercios sin ubicación. |
 | Filtros | `GET /api/categorias` para obtener los IDs activos. Envía a la búsqueda `categoria_id`, `parroquia`, `tipo`, `q` o `recepcionProveedores` según el filtro elegido. Para un radio agrega `latitud`, `longitud` y `distancia_km`. |

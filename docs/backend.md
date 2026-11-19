@@ -105,7 +105,7 @@ Estas rutas requieren una cuenta de emprendedor, salvo el catálogo público.
 | DELETE `/productos/{id}` | — | 204. Registra `archivado_en` |
 | GET `/productos/{id}/ficha.pdf` | — | PDF descargable |
 | GET `/productos/{id}/establecimientos-compatibles` | — | `establecimientos` con `motivos`, `pendientes` y un `aviso` general |
-| POST `/catalogo/compartir` | — | `url` revocable |
+| POST `/catalogo/compartir` | — | `url` JSON y `url_web` para la vista pública. Ambos enlaces son revocables. |
 | DELETE `/catalogo/compartir` | — | 204 |
 | GET `/catalogos/{token}` | Público con enlace | `catalogo.nombre` y `catalogo.productos` activos |
 
@@ -117,12 +117,14 @@ El filtro de compatibilidad usa categoría, cobertura por cantón/parroquia/sect
 
 | Método y ruta bajo `/api` | Acceso | Entrada y salida |
 | --- | --- | --- |
-| GET `/oportunidades` | Emprendedor | `oportunidades` propias |
+| GET `/oportunidades` | Emprendedor | `oportunidades` propias, con un resumen de cada establecimiento |
+| GET `/oportunidades/{id}` | Emprendedor propietario | `oportunidad` con establecimiento, seguimiento y propuestas enviadas |
 | POST `/oportunidades` | Emprendedor | `establecimiento_id`; devuelve `oportunidad` con 201 o 200 si ya estaba guardada |
 | PATCH `/oportunidades/{id}` | Emprendedor propietario | `estado`, `notas`, `proxima_gestion`, `condiciones_acordadas`; devuelve `oportunidad` |
 | GET `/oportunidades/{id}/propuestas` | Emprendedor propietario | `propuestas` enviadas |
 | POST `/establecimientos/{id}/propuestas` | Emprendedor | `productos` (IDs), `mensaje`, `referencia` (UUID opcional para reintentar); devuelve `propuesta` |
 | GET `/propuestas-recibidas` | Comercio | `propuestas` de establecimientos a su cargo |
+| GET `/propuestas-recibidas/{id}` | Comercio responsable | `propuesta` con los productos enviados y la respuesta, si existe |
 | PATCH `/propuestas-recibidas/{id}/respuesta` | Comercio responsable | `respuesta`, `mensaje_respuesta` opcional; devuelve `propuesta` |
 
 Estados del seguimiento en orden comercial: `por_contactar`, `contactado`, `muestra_entregada`, `en_negociacion`, `primer_pedido`, `punto_venta_activo` y `no_concretada`. El emprendedor registra su estado real incluso si el comercio carece de cuenta. El primer pedido registra `primer_pedido_en` para indicadores. Las respuestas son `me_interesa`, `solicito_informacion`, `agendar_visita` y `no_interesado_por_ahora`. La propuesta conserva una copia de los datos comerciales de los productos al enviarla. El comercio recibe la propuesta y el identificador del establecimiento. Las notas y condiciones del seguimiento son privadas.
@@ -141,6 +143,9 @@ Estados del seguimiento en orden comercial: `por_contactar`, `contactado`, `mues
 | PATCH `/establecimientos/{id}/responsable` | `responsable_id` de un comercio activo o `null`; devuelve `responsable_id` |
 | POST `/establecimientos/duplicados` | Recibe una ficha normalizada y devuelve IDs en `candidatos` |
 | POST `/establecimientos/importar` | `filas` normalizadas; devuelve `resultados` |
+| POST `/establecimientos/importar-archivo` | `multipart/form-data` con `archivo` XLSX o CSV y `simular` (`1` para simular o `0` para guardar). Devuelve el resumen y el número y estado de cada fila. |
+
+El panel acepta archivos de hasta 1 MiB, 4096 filas y 64 columnas. El modo de simulación valida las filas sin guardarlas. El reporte web omite datos de contacto, y el archivo temporal se elimina al finalizar.
 
 Brandon puede convertir el Excel en lotes de hasta 100 fichas con el JSON de ejemplo de esta guía. Las categorías deben existir antes de asociarlas. Cada fila admite `interes_encuesta` como booleano o nulo. Cada resultado incluye `fila` (índice desde cero) y `estado`. Las filas `creado` incluyen `establecimiento_id`, las `posible_duplicado` incluyen `candidatos` y las `invalida` incluyen `errores`. Las filas `reintentar` se pueden reenviar cuando termine otra carga.
 

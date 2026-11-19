@@ -31,7 +31,10 @@ class CatalogoController
             return $token;
         });
 
-        return response()->json(['url' => route('api.catalogos.publico', ['token' => $token])]);
+        return response()->json([
+            'url' => route('api.catalogos.publico', ['token' => $token]),
+            'url_web' => route('catalogos.publico', ['token' => $token]),
+        ]);
     }
 
     public function revocar(Request $request): Response

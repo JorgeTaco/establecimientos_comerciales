@@ -22,6 +22,7 @@ class ImportarEstablecimientos extends Command
         {--fila-encabezado= : Número de fila del encabezado (1-based); se detecta si se omite}
         {--categoria=* : Categoría a asociar a los comercios que comercializan lácteos}
         {--dry-run : Analiza el archivo y muestra el reporte sin guardar nada}
+        {--carga-web : Aplica los límites de la carga administrativa web}
         {--json= : Ruta del reporte JSON}
         {--limite= : Procesa solo las primeras N filas}
         {--corregir-signo : Corrige latitudes positivas evidentes}
@@ -39,7 +40,7 @@ class ImportarEstablecimientos extends Command
         $ruta = (string) $this->argument('archivo');
 
         try {
-            $lector = new LectorHojaCalculo($ruta);
+            $lector = new LectorHojaCalculo($ruta, (bool) $this->option('carga-web'));
             $hoja = $this->option('hoja');
             $filas = $lector->leer($hoja);
         } catch (Throwable $error) {

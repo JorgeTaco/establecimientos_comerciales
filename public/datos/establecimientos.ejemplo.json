@@ -2,111 +2,440 @@
   "establecimientos": [
     {
       "id": "ejemplo-001",
-      "nombre": "Tienda Demo Amanecer",
+      "nombre": "Tienda Los Alisos",
       "tipo": "tienda",
       "parroquia": "Mulaló",
       "latitud": -0.775,
       "longitud": -78.58,
-      "recepcionProveedores": "recibe_propuestas"
+      "recepcionProveedores": "recibe_propuestas",
+      "interesDeclarado": true,
+      "sector": "Centro",
+      "direccion": "Calle ficticia 123, frente a la plaza",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 1,
+          "nombre": "Lácteos"
+        },
+        {
+          "id": 4,
+          "nombre": "Abarrotes"
+        }
+      ],
+      "productos_buscados": [
+        "Yogur",
+        "Leche",
+        "Queso fresco"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": "Lunes a viernes, 09:00 a 11:00",
+      "modalidad_compra": "contado",
+      "pedido_inicial": 24,
+      "decision_compra": "sucursal",
+      "requisitos": "Registro sanitario y factura",
+      "devoluciones": "Acepta devolución de producto vencido",
+      "verificado_en": "2026-11-12",
+      "actualizado_en": "2026-11-12T10:20:00-05:00",
+      "contacto": {
+        "nombre": "Encargada de compras",
+        "telefono": "0990000001",
+        "email": "compras@ejemplo.test",
+        "canales": [
+          "telefono",
+          "whatsapp"
+        ]
+      },
+      "horario_atencion": "Lunes a domingo, 07:00 a 21:00"
     },
     {
       "id": "ejemplo-002",
-      "nombre": "Minimercado Demo Los Pinos",
+      "nombre": "Minimarket La Colina",
       "tipo": "minimercado",
       "parroquia": "Tanicuchí",
       "latitud": -0.81,
       "longitud": -78.635,
-      "recepcionProveedores": "no_recibe_por_ahora"
+      "recepcionProveedores": "no_recibe_por_ahora",
+      "interesDeclarado": false,
+      "sector": "La Colina",
+      "direccion": "Vía ficticia km 2",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 2,
+          "nombre": "Bebidas"
+        }
+      ],
+      "productos_buscados": [
+        "Leche entera"
+      ],
+      "tiene_refrigeracion": false,
+      "horario_proveedores": "Sábados, 10:00 a 12:00",
+      "modalidad_compra": "credito",
+      "pedido_inicial": 12,
+      "decision_compra": "oficina_central",
+      "requisitos": null,
+      "devoluciones": null,
+      "verificado_en": "2026-10-30",
+      "actualizado_en": "2026-10-30T16:05:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-003",
-      "nombre": "Supermercado Demo Cotopaxi",
+      "nombre": "Supermercado Valle Verde",
       "tipo": "supermercado",
       "parroquia": "Guaytacama",
       "latitud": null,
       "longitud": null,
-      "recepcionProveedores": "por_confirmar"
+      "recepcionProveedores": "por_confirmar",
+      "interesDeclarado": null,
+      "sector": "El Calvario",
+      "direccion": "Avenida ficticia s/n",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 1,
+          "nombre": "Lácteos"
+        },
+        {
+          "id": 5,
+          "nombre": "Frutas y verduras"
+        }
+      ],
+      "productos_buscados": [
+        "Queso",
+        "Yogur",
+        "Mantequilla"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": null,
+      "modalidad_compra": "consignacion",
+      "pedido_inicial": 60,
+      "decision_compra": "oficina_central",
+      "requisitos": "Cámara de comercio y RUC",
+      "devoluciones": null,
+      "verificado_en": null,
+      "actualizado_en": "2026-11-02T09:00:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-004",
-      "nombre": "Tienda Demo El Volcán",
+      "nombre": "Tienda El Volcán",
       "tipo": "tienda",
       "parroquia": "Mulaló",
       "latitud": -0.7813,
       "longitud": -78.5761,
-      "recepcionProveedores": "recibe_propuestas"
+      "recepcionProveedores": "recibe_propuestas",
+      "interesDeclarado": true,
+      "sector": "Barrio Norte",
+      "direccion": "Calle ficticia 45",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 1,
+          "nombre": "Lácteos"
+        }
+      ],
+      "productos_buscados": [
+        "Leche",
+        "Queso"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": "Martes y jueves, 08:00 a 10:00",
+      "modalidad_compra": "contado",
+      "pedido_inicial": 18,
+      "decision_compra": "sucursal",
+      "requisitos": null,
+      "devoluciones": "No acepta devoluciones",
+      "verificado_en": "2026-11-15",
+      "actualizado_en": "2026-11-15T11:30:00-05:00",
+      "contacto": {
+        "nombre": "Propietario",
+        "telefono": "0990000004",
+        "email": null,
+        "canales": [
+          "whatsapp"
+        ]
+      }
     },
     {
       "id": "ejemplo-005",
-      "nombre": "Minimarket Demo San José",
+      "nombre": "Minimarket San José",
       "tipo": "minimercado",
       "parroquia": "Tanicuchí",
       "latitud": -0.7995,
       "longitud": -78.6221,
-      "recepcionProveedores": "por_confirmar"
+      "recepcionProveedores": "por_confirmar",
+      "interesDeclarado": false,
+      "sector": "San José",
+      "direccion": "Calle ficticia 8-12",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 4,
+          "nombre": "Abarrotes"
+        }
+      ],
+      "productos_buscados": [
+        "Yogur"
+      ],
+      "tiene_refrigeracion": null,
+      "horario_proveedores": "Por confirmar con el comercio",
+      "modalidad_compra": null,
+      "pedido_inicial": null,
+      "decision_compra": null,
+      "requisitos": null,
+      "devoluciones": null,
+      "verificado_en": null,
+      "actualizado_en": "2026-11-05T14:10:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-006",
-      "nombre": "Tienda Demo La Esperanza",
+      "nombre": "Tienda La Esperanza",
       "tipo": "tienda",
       "parroquia": "Guaytacama",
       "latitud": -0.8502,
       "longitud": -78.6603,
-      "recepcionProveedores": "recibe_propuestas"
+      "recepcionProveedores": "recibe_propuestas",
+      "interesDeclarado": true,
+      "sector": "La Esperanza",
+      "direccion": "Camino ficticio s/n",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 1,
+          "nombre": "Lácteos"
+        },
+        {
+          "id": 2,
+          "nombre": "Bebidas"
+        }
+      ],
+      "productos_buscados": [
+        "Queso fresco",
+        "Leche"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": "Lunes, miércoles y viernes, 09:00 a 11:00",
+      "modalidad_compra": "contado",
+      "pedido_inicial": 20,
+      "decision_compra": "sucursal",
+      "requisitos": "Factura o nota de venta",
+      "devoluciones": null,
+      "verificado_en": "2026-11-14",
+      "actualizado_en": "2026-11-14T08:45:00-05:00",
+      "contacto": {
+        "nombre": "Doña Rosa (encargada)",
+        "telefono": "0990000006",
+        "email": null,
+        "canales": [
+          "telefono"
+        ]
+      }
     },
     {
       "id": "ejemplo-007",
-      "nombre": "Comercial Demo El Rosal",
+      "nombre": "Comercial El Rosal",
       "tipo": "minimercado",
       "parroquia": "Lasso",
       "latitud": -0.6854,
       "longitud": -78.6185,
-      "recepcionProveedores": "no_recibe_por_ahora"
+      "recepcionProveedores": "no_recibe_por_ahora",
+      "interesDeclarado": null,
+      "sector": "El Rosal",
+      "direccion": "Panamericana ficticia km 3",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 4,
+          "nombre": "Abarrotes"
+        },
+        {
+          "id": 2,
+          "nombre": "Bebidas"
+        }
+      ],
+      "productos_buscados": [],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": null,
+      "modalidad_compra": "credito",
+      "pedido_inicial": 30,
+      "decision_compra": "oficina_central",
+      "requisitos": null,
+      "devoluciones": null,
+      "verificado_en": "2026-09-28",
+      "actualizado_en": "2026-09-28T12:00:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-008",
-      "nombre": "Tienda Demo Santa Rosa",
+      "nombre": "Tienda Santa Rosa",
       "tipo": "tienda",
       "parroquia": "Lasso",
       "latitud": null,
       "longitud": null,
-      "recepcionProveedores": "por_confirmar"
+      "recepcionProveedores": "por_confirmar",
+      "interesDeclarado": false,
+      "sector": "Centro",
+      "direccion": "Calle ficticia 3-40",
+      "canton": "Latacunga",
+      "categorias": [],
+      "productos_buscados": [
+        "Yogur",
+        "Mantequilla"
+      ],
+      "tiene_refrigeracion": null,
+      "horario_proveedores": null,
+      "modalidad_compra": null,
+      "pedido_inicial": null,
+      "decision_compra": null,
+      "requisitos": null,
+      "devoluciones": null,
+      "verificado_en": null,
+      "actualizado_en": "2026-11-08T15:25:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-009",
-      "nombre": "Minimarket Demo El Ahorro",
+      "nombre": "Minimarket El Ahorro",
       "tipo": "minimercado",
       "parroquia": "Salache",
       "latitud": -0.9938,
       "longitud": -78.6254,
-      "recepcionProveedores": "recibe_propuestas"
+      "recepcionProveedores": "recibe_propuestas",
+      "interesDeclarado": true,
+      "sector": "Salache Bajo",
+      "direccion": "Vía ficticia a Salache",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 1,
+          "nombre": "Lácteos"
+        }
+      ],
+      "productos_buscados": [
+        "Leche",
+        "Yogur",
+        "Queso"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": "Miércoles, 10:00 a 13:00",
+      "modalidad_compra": "contado",
+      "pedido_inicial": 36,
+      "decision_compra": "sucursal",
+      "requisitos": "Registro sanitario",
+      "devoluciones": "Acepta devolución dentro de 48 horas",
+      "verificado_en": "2026-11-16",
+      "actualizado_en": "2026-11-16T10:00:00-05:00",
+      "contacto": {
+        "nombre": "Administrador",
+        "telefono": "0990000009",
+        "email": "minimarket@ejemplo.test",
+        "canales": [
+          "telefono",
+          "email"
+        ]
+      },
+      "horario_atencion": "Lunes a sábado, 07:30 a 20:00"
     },
     {
       "id": "ejemplo-010",
-      "nombre": "Supermercado Demo Toacaso",
-      "tipo": "supermercado",
+      "nombre": "Distribuidora Toacaso",
+      "tipo": "distribuidor",
       "parroquia": "Toacaso",
       "latitud": -0.7231,
       "longitud": -78.6802,
-      "recepcionProveedores": "no_recibe_por_ahora"
+      "recepcionProveedores": "no_recibe_por_ahora",
+      "interesDeclarado": null,
+      "sector": "Centro",
+      "direccion": "Calle ficticia 1-15",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 4,
+          "nombre": "Abarrotes"
+        }
+      ],
+      "productos_buscados": [],
+      "tiene_refrigeracion": false,
+      "horario_proveedores": "Viernes, 08:00 a 09:00",
+      "modalidad_compra": "consignacion",
+      "pedido_inicial": 100,
+      "decision_compra": "oficina_central",
+      "requisitos": "RUC y lista de precios",
+      "devoluciones": null,
+      "verificado_en": "2026-10-11",
+      "actualizado_en": "2026-10-11T09:30:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-011",
-      "nombre": "Tienda Demo Belisario",
+      "nombre": "Tienda Belisario",
       "tipo": "tienda",
       "parroquia": "Belisario Quevedo",
       "latitud": -0.9412,
       "longitud": -78.6015,
-      "recepcionProveedores": "recibe_propuestas"
+      "recepcionProveedores": "recibe_propuestas",
+      "interesDeclarado": true,
+      "sector": "Centro",
+      "direccion": "Calle ficticia 22",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 1,
+          "nombre": "Lácteos"
+        },
+        {
+          "id": 5,
+          "nombre": "Frutas y verduras"
+        }
+      ],
+      "productos_buscados": [
+        "Queso",
+        "Yogur"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": "Lunes a sábado, 08:30 a 10:30",
+      "modalidad_compra": "contado",
+      "pedido_inicial": 15,
+      "decision_compra": "sucursal",
+      "requisitos": null,
+      "devoluciones": null,
+      "verificado_en": "2026-11-13",
+      "actualizado_en": "2026-11-13T17:40:00-05:00",
+      "contacto": null
     },
     {
       "id": "ejemplo-012",
-      "nombre": "Minimarket Demo Pastocalle",
+      "nombre": "Minimarket Pastocalle",
       "tipo": "minimercado",
       "parroquia": "Pastocalle",
       "latitud": -0.8801,
       "longitud": -78.6521,
-      "recepcionProveedores": "por_confirmar"
+      "recepcionProveedores": "por_confirmar",
+      "interesDeclarado": null,
+      "sector": "Centro",
+      "direccion": "Calle ficticia 5-03",
+      "canton": "Latacunga",
+      "categorias": [
+        {
+          "id": 2,
+          "nombre": "Bebidas"
+        }
+      ],
+      "productos_buscados": [
+        "Leche"
+      ],
+      "tiene_refrigeracion": true,
+      "horario_proveedores": null,
+      "modalidad_compra": "credito",
+      "pedido_inicial": 24,
+      "decision_compra": "sucursal",
+      "requisitos": null,
+      "devoluciones": null,
+      "verificado_en": null,
+      "actualizado_en": "2026-11-10T13:15:00-05:00",
+      "contacto": null
     }
   ]
 }

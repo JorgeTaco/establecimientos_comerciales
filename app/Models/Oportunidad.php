@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['establecimiento_id', 'estado', 'notas', 'proxima_gestion', 'condiciones_acordadas'])]
@@ -12,6 +13,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Oportunidad extends Model
 {
     protected $table = 'oportunidades';
+
+    public function establecimiento(): BelongsTo
+    {
+        return $this->belongsTo(Establecimiento::class);
+    }
 
     protected function casts(): array
     {

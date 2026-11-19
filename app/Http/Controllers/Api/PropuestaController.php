@@ -6,6 +6,7 @@ use App\Models\Establecimiento;
 use App\Models\PerfilComercial;
 use App\Models\Propuesta;
 use App\Support\FlujoComercial;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,13 +59,28 @@ class PropuestaController
 
     public function recibidas(Request $request): JsonResponse
     {
-        $comercios = PerfilComercial::query()->where('user_id', $request->user()->id)->select('establecimiento_id');
-        $propuestas = Propuesta::query()->whereHas('oportunidad', fn ($q) => $q->whereIn('establecimiento_id', $comercios))
-            ->with('oportunidad:id,establecimiento_id')->latest('id')->get();
+        return response()->json(['propuestas' => $this->consultaRecibidas($request)->latest('id')->get()
+            ->map($this->datosRecibida(...))]);
+    }
 
-        return response()->json(['propuestas' => $propuestas->map(function (Propuesta $propuesta) {
-            return $propuesta->attributesToArray() + ['establecimiento_id' => (string) $propuesta->oportunidad->establecimiento_id];
-        })]);
+    public function recibida(Request $request, Propuesta $propuesta): JsonResponse
+    {
+        $propuesta = $this->consultaRecibidas($request)->findOrFail($propuesta->id);
+
+        return response()->json(['propuesta' => $this->datosRecibida($propuesta)]);
+    }
+
+    private function consultaRecibidas(Request $request): Builder
+    {
+        $comercios = PerfilComercial::query()->where('user_id', $request->user()->id)->select('establecimiento_id');
+
+        return Propuesta::query()->whereHas('oportunidad', fn ($q) => $q->whereIn('establecimiento_id', $comercios))
+            ->with('oportunidad:id,establecimiento_id');
+    }
+
+    private function datosRecibida(Propuesta $propuesta): array
+    {
+        return $propuesta->attributesToArray() + ['establecimiento_id' => (string) $propuesta->oportunidad->establecimiento_id];
     }
 
     public function responder(Request $request, Propuesta $propuesta): JsonResponse

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Vista previa del directorio de establecimientos para emprendedores de lácteos en Latacunga.">
+    <title>Establecimientos comerciales · Vista previa</title>
+    <link rel="stylesheet" href="public/css/establecimientos.css">
+    <script src="public/js/datos-establecimientos.js" defer></script>
+    <script src="public/js/vista-previa.js" defer></script>
+</head>
+<body>
+    <header class="cabecera">
+        <div class="heroe">
+            <p class="heroe__contexto">Piloto lácteos · Latacunga, Cotopaxi</p>
+            <h1 class="heroe__titulo">Encuentra dónde vender tus productos</h1>
+            <p class="heroe__texto">Explora comercios de ejemplo y revisa si reciben propuestas, cómo se abastecen y cuándo atienden a proveedores.</p>
+        </div>
+    </header>
+
+    <main class="contenido">
+        <section aria-labelledby="titulo-prueba">
+            <h2 id="titulo-prueba">Evaluar la aplicación completa</h2>
+            <p>Abre <strong>/evaluacion</strong> en la instalación de Laravel que te indique el equipo e inicia sesión con la cuenta que recibiste. Allí podrás crear un producto, probar la compatibilidad y registrar el seguimiento de una oportunidad.</p>
+            <a class="boton" href="https://github.com/JorgeTaco/establecimientos_comerciales#levantar-la-aplicación">Ver la guía de instalación</a>
+        </section>
+        <section aria-labelledby="titulo-muestra">
+            <h2 id="titulo-muestra">Directorio de ejemplo</h2>
+            <p>Los comercios, las direcciones y los datos de estas fichas son ficticios.</p>
+            <p id="estado-vista-previa" role="status">Cargando los comercios de ejemplo…</p>
+            <ul class="listado" id="comercios-ejemplo"></ul>
+            <template id="comercio-ejemplo">
+                <li class="tarjeta">
+                    <h3 class="tarjeta__nombre"></h3>
+                    <p class="tarjeta__meta"></p>
+                    <p><span class="estado"></span></p>
+                    <details>
+                        <summary>Consultar ficha</summary>
+                        <dl class="ficha__rejilla"></dl>
+                    </details>
+                </li>
+            </template>
+        </section>
+    </main>
+    <footer class="pie">
+        <p>Establecimientos comerciales · Proyecto de Jorge, Michelle y Brandon</p>
+    </footer>
+</body>
+</html>

@@ -18,7 +18,7 @@ class LectorHojaCalculo
 
     private string $extension;
 
-    public function __construct(string $ruta)
+    public function __construct(string $ruta, private bool $cargaWeb = false)
     {
         $rutaReal = realpath($ruta);
 
@@ -68,7 +68,25 @@ class LectorHojaCalculo
             throw new RuntimeException('No se pudo abrir el archivo .xlsx. Verifica que no esté dañado.');
         }
 
+        if ($this->cargaWeb && ! $this->contenedorWebValido($zip)) {
+            $zip->close();
+            throw new RuntimeException('El contenido descomprimido del Excel supera el límite de carga web.');
+        }
+
         return $zip;
+    }
+
+    private function contenedorWebValido(ZipArchive $zip): bool
+    {
+        $total = 0;
+        if ($zip->numFiles > 200) {
+            return false;
+        }
+        for ($indice = 0; $indice < $zip->numFiles; $indice++) {
+            $total += $zip->statIndex($indice)['size'] ?? 0;
+        }
+
+        return $total <= 6 * 1024 * 1024;
     }
 
     /**
@@ -98,6 +116,9 @@ class LectorHojaCalculo
                 if ($numero < 1) {
                     $numero = $filas === [] ? 1 : max(array_keys($filas)) + 2;
                 }
+                if ($this->cargaWeb && $numero > 4096) {
+                    throw new RuntimeException('Para cargar Excel desde la web, usa hasta 4096 filas.');
+                }
 
                 $valores = [];
                 $siguiente = 0;
@@ -107,6 +128,9 @@ class LectorHojaCalculo
                     $indice = $referencia === ''
                         ? $siguiente
                         : $this->indiceColumna($referencia);
+                    if ($this->cargaWeb && ($indice < 0 || $indice >= 64)) {
+                        throw new RuntimeException('Para cargar Excel desde la web, usa hasta 64 columnas.');
+                    }
 
                     $siguiente = $indice + 1;
                     $valores[$indice] = $this->valorCelda($celda, $compartidos);
@@ -316,7 +340,7 @@ class LectorHojaCalculo
     private function xml(string $contenido, string $descripcion): SimpleXMLElement
     {
         $anterior = libxml_use_internal_errors(true);
-        $xml = simplexml_load_string($contenido);
+        $xml = simplexml_load_string($contenido, options: LIBXML_NONET);
 
         if ($xml === false) {
             libxml_clear_errors();
@@ -357,6 +381,10 @@ class LectorHojaCalculo
         $filas = [];
 
         while (($fila = fgetcsv($memoria, 0, $delimitador, '"', '')) !== false) {
+            if ($this->cargaWeb && (count($filas) >= 4096 || count($fila) > 64)) {
+                fclose($memoria);
+                throw new RuntimeException('Para cargar CSV desde la web, usa hasta 4096 filas y 64 columnas.');
+            }
             $filas[] = array_map(
                 fn ($valor) => $valor === null ? '' : trim((string) $valor),
                 $fila
