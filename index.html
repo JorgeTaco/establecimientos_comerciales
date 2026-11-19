@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="public/css/establecimientos.css">
     <link rel="stylesheet" href="public/css/navegacion.css">
     <script src="public/js/datos-establecimientos.js" defer></script>
-    <script src="public/js/vista-previa.js" defer></script>
+    <script src="public/js/vista-previa.js?v=2" defer></script>
 </head>
 <body class="directorio">
     <header class="cabecera cabecera--directorio cabecera--navegacion">
@@ -35,6 +35,21 @@
         <section class="vista-previa__seccion" aria-labelledby="titulo-muestra">
             <h2 id="titulo-muestra">Directorio de ejemplo</h2>
             <p>Los comercios, las direcciones y los datos de estas fichas son ficticios.</p>
+            <div class="filtros" role="search" aria-label="Buscar en el directorio de ejemplo">
+                <div class="campo">
+                    <label for="buscar-ejemplo">Buscar comercio</label>
+                    <input id="buscar-ejemplo" type="search" placeholder="Nombre, parroquia o sector" maxlength="100">
+                </div>
+                <div class="campo">
+                    <label for="estado-ejemplo">Recepción de propuestas</label>
+                    <select id="estado-ejemplo">
+                        <option value="">Todos los estados</option>
+                        <option value="recibe_propuestas">Recibe propuestas</option>
+                        <option value="por_confirmar">Por confirmar</option>
+                        <option value="no_recibe_por_ahora">No recibe por ahora</option>
+                    </select>
+                </div>
+            </div>
             <p id="estado-vista-previa" role="status">Cargando los comercios de ejemplo…</p>
             <ul class="listado" id="comercios-ejemplo"></ul>
             <template id="comercio-ejemplo">

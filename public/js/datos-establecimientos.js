@@ -296,17 +296,15 @@
         return params.length ? '?' + params.join('&') : '';
     }
 
-    async function buscar(apiUrl, filtros) {
-        var cuerpo = await pedir(apiUrl + queryString({ ...filtros, facetas: 1 }));
+    async function buscar(apiUrl, parametros) {
+        var cuerpo = await pedir(apiUrl + queryString(parametros));
         if (!cuerpo || !Array.isArray(cuerpo.establecimientos) ||
-            !cuerpo.facetas || !Number.isInteger(cuerpo.totalDirectorio)) {
+            (parametros.facetas && (!cuerpo.facetas || !Number.isInteger(cuerpo.totalDirectorio) ||
+                !Number.isInteger(cuerpo.totalCoincidencias) || !Number.isInteger(cuerpo.totalReciben)))) {
             throw new Error('El directorio recibió una respuesta inválida.');
         }
-        return {
-            establecimientos: cuerpo.establecimientos.map(normalizar),
-            facetas: cuerpo.facetas,
-            totalDirectorio: cuerpo.totalDirectorio
-        };
+
+        return { ...cuerpo, establecimientos: cuerpo.establecimientos.map(normalizar) };
     }
 
     async function cargarFicha(apiBaseUrl, registro) {

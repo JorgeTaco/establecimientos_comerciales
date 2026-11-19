@@ -63,6 +63,10 @@ Con `facetas=1`, la respuesta añade `totalDirectorio` (cantidad de comercios an
 
 Cada conteo aplica el término, el radio y los filtros de los demás campos. Por ejemplo, con `q=Tienda&tipo=tienda&parroquia=Mulaló&facetas=1`, los conteos de parroquia incluyen alternativas para tiendas que coinciden con el texto. `ubicados=1` limita fichas y conteos a comercios con ambas coordenadas. La categoría activa seleccionada puede aparecer con `cantidad: 0` para conservar su etiqueta en enlaces compartidos.
 
+Para paginar alfabéticamente envía `limite` (de 1 a 50), junto con los filtros. Si recibes `siguienteCursor`, pásalo al parámetro `cursor` de la siguiente consulta con los mismos filtros. `null` marca el final. El orden usa nombre e ID para distinguir nombres iguales. Las consultas con origen conservan el orden geográfico y pueden recuperar todas las coincidencias. Con `facetas=1`, `totalCoincidencias` y `totalReciben` corresponden al conjunto completo.
+
+Envía `modo=mapa` con los mismos filtros para obtener las fichas resumidas con coordenadas. Esta consulta mantiene todos los puntos del conjunto filtrado. El directorio solicita el mapa al abrir su pestaña y usa una solicitud separada para cargar Google Maps.
+
 Con `PUBLICAR_INTERES_ENCUESTA=true`, la búsqueda ampliada y la ficha incluyen `interesDeclarado` con valor `true`, `false` o `null`. La búsqueda admite `interes_declarado=1` o `0`. Las respuestas desconocidas quedan fuera de ambos filtros. El valor predeterminado mantiene las respuestas privadas. Habilítalo para datos ficticios en desarrollo o cuando esté autorizada la publicación de la encuesta real. `recepcionProveedores` conserva el estado de recepción comercial.
 
 Al registrar, envía `nombre`, `tipo` y `parroquia`. Los demás campos son opcionales. Ejemplo de alta o de una fila normalizada por Brandon.
@@ -151,8 +155,16 @@ Estados del seguimiento en orden comercial: `por_contactar`, `contactado`, `mues
 
 El panel acepta archivos de hasta 1 MiB, 4096 filas y 64 columnas. El modo de simulación valida las filas sin guardarlas. El reporte web omite datos de contacto, y el archivo temporal se elimina al finalizar.
 
+Usuarios y reportes aceptan `por_cursor=1`. Usa `next_cursor` y `prev_cursor` con el parámetro `cursor`. Las consultas con `page` siguen usando paginación por número.
+
 Brandon puede convertir el Excel en lotes de hasta 100 fichas con el JSON de ejemplo de esta guía. Las categorías deben existir antes de asociarlas. Cada fila admite `interes_encuesta` como booleano o nulo. Cada resultado incluye `fila` (índice desde cero) y `estado`. Las filas `creado` incluyen `establecimiento_id`, las `posible_duplicado` incluyen `candidatos` y las `invalida` incluyen `errores`. Las filas `reintentar` se pueden reenviar cuando termine otra carga.
 
 La consulta administrativa de candidatos muestra coincidencias por nombre, dirección o teléfono. La importación detiene filas con teléfono compartido o nombre y dirección coincidentes. En fichas sin dirección, usa nombre, tipo, parroquia y el teléfono disponible para detectar reintentos. La carga conserva los contactos como privados y asigna `por_confirmar` a la recepción. El Excel real se mantiene fuera de Git.
 
 Para probar las fotos en local, ejecuta `php artisan storage:link` y configura `APP_URL` con el origen de la app. El mapa requiere una clave válida de Google Maps en el entorno de la interfaz. [Autenticación Laravel](https://laravel.com/framework/docs/13.x/authentication) · [Almacenamiento Laravel](https://laravel.com/framework/docs/13.x/filesystem) · [Enlaces de Google Maps](https://developers.google.com/maps/documentation/urls/get-started)
+
+## Rendimiento en MySQL
+
+- Las búsquedas usan índices de parroquia y tipo, orden alfabético y coordenadas. Los indicadores usan índices para el estado y el primer pedido.
+- La primera página pública, las categorías activas y los indicadores usan caché durante 60 segundos. Las altas y ediciones invalidan las entradas relacionadas al confirmar el cambio. Las búsquedas con coordenadas de origen se calculan para cada consulta.
+- El radio usa primero un rango de latitud y longitud en MySQL y luego la distancia exacta en PHP. En una prueba local de MySQL 8.4 con 32.768 puntos sintéticos, el rango con índice decimal tardó 0,92 ms, un índice espacial sobre la misma zona tardó 2,70 ms y el recorrido completo 6,95 ms. Los tres localizaron los mismos 253 candidatos. El esquema usa el índice decimal para conservar la representación de los comercios con ubicación pendiente.

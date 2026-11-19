@@ -124,6 +124,8 @@ class DatosEstablecimiento
                 $establecimiento->categorias()->sync($datos['categorias']);
             }
 
+            DB::afterCommit(CacheComercial::invalidarDirectorio(...));
+
             return [$establecimiento->load('perfilComercial', 'categorias'), []];
         });
     }

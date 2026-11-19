@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Oportunidad;
+use App\Support\CacheComercial;
 use App\Support\FlujoComercial;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -58,6 +60,9 @@ class OportunidadController
                 $oportunidad->primer_pedido_en = now();
             }
             $oportunidad->save();
+            if ($oportunidad->wasChanged(['estado', 'primer_pedido_en'])) {
+                DB::afterCommit(fn () => Cache::forget(CacheComercial::INDICADORES));
+            }
 
             return $oportunidad;
         });

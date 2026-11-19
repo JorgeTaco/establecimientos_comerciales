@@ -23,6 +23,8 @@ Los filtros muestran cuántos resultados quedarán con cada opción. Se actualiz
 
 La búsqueda, los filtros generales, el orden y la vista seleccionada se conservan en la URL. La ubicación de origen de una búsqueda por radio permanece en el historial de la pestaña. En la red local por HTTP se admiten coordenadas manuales. **Usar mi ubicación** requiere permiso y un origen seguro.
 
+**Mostrar más comercios** carga la siguiente página cuando el orden es alfabético y la búsqueda no tiene un origen geográfico. Los conteos abarcan la búsqueda completa. El mapa solicita sus puntos por separado.
+
 Desde **Mapa** puedes abrir una ficha o consultar **Cómo llegar** para cada comercio con coordenadas. **Mostrar mapa** carga Google Maps bajo demanda. También puedes cambiar entre **Lista** y **Mapa** con las flechas del teclado.
 
 Para preparar un catálogo ficticio opcional, crea `emprendedor@ejemplo.test` mediante `php artisan usuario:crear` y ejecuta `php artisan db:seed --class=UsuarioProductoSeeder` después de cargar los comercios de ejemplo.

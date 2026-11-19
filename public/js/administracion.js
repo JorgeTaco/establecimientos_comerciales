@@ -131,29 +131,40 @@
             enviar(formulario, 'reportes', async estado => {
                 await solicitar('/reportes/' + reporte.id, 'PATCH', { estado: estadoReporte.value, resolucion: resolucion.value });
                 estado.textContent = 'Reporte actualizado.';
-                await cargarPagina('reportes', mostrarReporte, Number(lista.dataset.pagina));
+                await cargarPagina('reportes', mostrarReporte, lista.dataset.cursor);
             });
             detalle.append(formulario);
         }
         lista.append(detalle);
     }
 
-    async function cargarPagina(id, mostrar, pagina = 1) {
-        const respuesta = await solicitar('/' + id + '?page=' + pagina);
+    async function cargarPagina(id, mostrar, cursor = '') {
+        const parametros = new URLSearchParams({ por_cursor: '1' });
+        if (cursor) parametros.set('cursor', cursor);
+        const respuesta = await solicitar('/' + id + '?' + parametros);
         const paginador = respuesta[id];
         const lista = document.querySelector('#' + id + ' [data-lista]');
         const controles = document.querySelector('#' + id + ' [data-paginacion]');
         lista.replaceChildren();
-        lista.dataset.pagina = paginador.current_page;
+        lista.dataset.cursor = cursor;
         for (const elemento of paginador.data) mostrar(elemento, lista);
         if (!paginador.data.length) lista.append(nodo('p', 'No hay registros.'));
         const anterior = boton('Anterior');
         const siguiente = boton('Siguiente');
-        anterior.disabled = paginador.current_page <= 1;
-        siguiente.disabled = paginador.current_page >= paginador.last_page;
-        anterior.onclick = () => controlar(id, () => cargarPagina(id, mostrar, paginador.current_page - 1));
-        siguiente.onclick = () => controlar(id, () => cargarPagina(id, mostrar, paginador.current_page + 1));
-        controles.replaceChildren(anterior, nodo('span', paginador.current_page + ' de ' + paginador.last_page), siguiente);
+        anterior.disabled = !paginador.prev_cursor;
+        siguiente.disabled = !paginador.next_cursor;
+
+        function cambiar(destino) {
+            anterior.disabled = siguiente.disabled = true;
+            controlar(id, () => cargarPagina(id, mostrar, destino)).finally(() => {
+                anterior.disabled = !paginador.prev_cursor;
+                siguiente.disabled = !paginador.next_cursor;
+            });
+        }
+
+        anterior.onclick = () => cambiar(paginador.prev_cursor);
+        siguiente.onclick = () => cambiar(paginador.next_cursor);
+        controles.replaceChildren(anterior, siguiente);
     }
 
     enviar(document.getElementById('crear-categoria'), 'categorias', async estado => {
