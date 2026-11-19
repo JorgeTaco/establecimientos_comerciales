@@ -35,9 +35,6 @@
             <span>¿No tienes cuenta?</span>
             <a href="{{ route('registro') }}" class="boton boton--secundario">Crear cuenta</a>
         </div>
-        <p class="pista">
-            <a href="{{ route('establecimientos.index') }}">← Volver al directorio</a>
-        </p>
     </div>
 
     @push('styles')

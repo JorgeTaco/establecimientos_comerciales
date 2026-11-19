@@ -6,7 +6,6 @@
                 Comercios que pueden recibir tu producto <strong>{{ $producto->nombre }}</strong>.
             </p>
         </div>
-        <a href="{{ route('productos.show', ['producto' => $producto->id]) }}" class="boton boton--secundario">← Volver al producto</a>
     </div>
 
     <div class="tarjeta">
@@ -113,7 +112,7 @@
                             motivosHtml + pendientesHtml +
                             '</div>' +
                             '<div class="compatible__accion">' +
-                            '<a href="/establecimientos/' + c.id + '" class="boton boton--secundario" style="padding:0.4rem 0.8rem; font-size:0.85rem;">Ver ficha</a>' +
+                            '<a href="/establecimientos/' + encodeURIComponent(c.id) + '?desde_producto={{ $producto->id }}" class="boton boton--secundario" style="padding:0.4rem 0.8rem; font-size:0.85rem;">Ver ficha</a>' +
                             '</div>';
                         lista.appendChild(li);
                     });

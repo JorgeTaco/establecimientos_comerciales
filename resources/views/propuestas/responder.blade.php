@@ -46,9 +46,6 @@
         </form>
     </div>
 
-    <p class="pista" style="margin-top:1.5rem;">
-        <a href="{{ route('propuestas.recibidas') }}">← Volver a propuestas recibidas</a>
-    </p>
 
     @push('styles')
     <style>

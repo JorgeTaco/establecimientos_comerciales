@@ -8,7 +8,7 @@ use App\Http\Controllers\Web\ProductoController;
 use App\Http\Middleware\CuentaActiva;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'establecimientos.index');
+Route::view('/', 'establecimientos.index')->name('inicio');
 Route::view('/evaluacion', 'evaluacion')->name('evaluacion');
 Route::view('/establecimientos', 'establecimientos.index')->name('establecimientos.index');
 Route::get('/establecimientos/{establecimiento}', [FichaController::class, 'show'])
