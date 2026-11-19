@@ -20,6 +20,10 @@ La [guía de integración del piloto](docs/integracion-piloto.md) reúne las rut
 
 La prueba de aceptación del piloto será completar desde el celular este recorrido de emprendedor: registrar un producto, encontrar un comercio compatible, consultar su ficha, contactarlo y guardar el resultado.
 
+## Inicio de sesión y cuenta del docente
+
+El [plan de inicio de sesión](docs/plan-inicio-sesion.md) define qué prepara Jorge en Laravel, qué conecta Michelle en la interfaz y cómo valida Brandon la sesión y la cuenta de evaluación con MySQL. También describe el orden de integración y cómo entregar al docente un acceso ya probado.
+
 ## Levantar el proyecto en local
 
 Se necesita PHP 8.3 o superior con las extensiones de Laravel y `pdo_mysql`, Composer y MySQL. La base actual usa Blade y sirve los archivos estáticos desde `public/`. [Requisitos de Laravel 13](https://laravel.com/framework/docs/deployment)
