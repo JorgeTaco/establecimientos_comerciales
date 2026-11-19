@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Categoria;
+use App\Models\Establecimiento;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -55,7 +56,7 @@ class ImportarEstablecimientosTest extends TestCase
 
         $this->assertDatabaseCount('establecimientos', 1);
 
-        $establecimiento = \App\Models\Establecimiento::query()->sole();
+        $establecimiento = Establecimiento::query()->sole();
         $this->assertSame('Tienda Ejemplo', $establecimiento->nombre);
         $this->assertSame('tienda', $establecimiento->tipo);
         $this->assertSame('Mulaló', $establecimiento->parroquia);
@@ -109,7 +110,7 @@ class ImportarEstablecimientosTest extends TestCase
             'nombre' => 'Panaderia Alpina',
         ]);
 
-        $establecimiento = \App\Models\Establecimiento::query()->sole();
+        $establecimiento = Establecimiento::query()->sole();
         $this->assertEqualsWithDelta(-0.986182, $establecimiento->latitud, 0.000001);
         $this->assertEqualsWithDelta(-78.582756, $establecimiento->longitud, 0.000001);
     }

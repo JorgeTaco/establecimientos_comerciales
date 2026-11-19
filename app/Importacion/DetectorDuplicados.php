@@ -21,9 +21,7 @@ class DetectorDuplicados
 
     public const BAJA = 'baja';
 
-    public function __construct(private DatosEstablecimiento $establecimientos)
-    {
-    }
+    public function __construct(private DatosEstablecimiento $establecimientos) {}
 
     /**
      * @param  list<array{fila: int, numero: ?string, nombre: ?string, datos: array<string, mixed>}>  $filas

@@ -89,9 +89,7 @@ class MapeadorEstablecimientos
         '--',
     ];
 
-    public function __construct(private DatosEstablecimiento $reglas)
-    {
-    }
+    public function __construct(private DatosEstablecimiento $reglas) {}
 
     /**
      * Encuentra la fila que contiene los encabezados. El Excel real trae
